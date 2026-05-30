@@ -1,0 +1,11 @@
+spring:
+  application:
+    name:
+      VirtualAIBox
+
+  virtual-clock:
+    # 时间刻度
+    tick:
+    # 元时间：虚拟时钟的起始时间
+    meta-date:
+
