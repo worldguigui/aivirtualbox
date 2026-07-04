@@ -6,8 +6,10 @@ spring:
       VirtualAIBox
 
   virtual-clock:
-    # 时间刻度，1秒 = 12虚拟秒
-    tick: 12
+    # 时间刻度
+    tick: 0
+    # 时间步长
+    interval: 30
     # 元时间：虚拟时钟的起始时间
     meta-instant: 2026-06-03T00:00:00+08:00
 
