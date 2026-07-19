@@ -1,4 +1,20 @@
+server:
+  port: 8080
 
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-5d4466eb8eaa47cba6f133aa84906e68
+      model-name: deepseek-chat
+      log-responses: false
+      log-requests: false
+    streaming-chat-model:
+      base-url: https://api.deepseek.com
+      api-key: sk-5d4466eb8eaa47cba6f133aa84906e68
+      model-name: deepseek-chat
+      log-responses: false
+      log-requests: false
 
 spring:
   application:

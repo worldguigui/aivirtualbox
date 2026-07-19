@@ -1,14 +1,10 @@
-package com.own.virtualaibox.grid;
+package com.own.virtualaibox.core;
 
 import com.own.virtualaibox.config.VirtualClockConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Component
 @Slf4j
@@ -48,6 +44,10 @@ public class VirtualClock {
     public Instant getCurrentTime() {
         log.info("getCurrentTime: " + interval * tick);
         return metaInstant.plusSeconds(interval * tick);
+    }
+
+    public int getTick() {
+        return tick;
     }
 
 }

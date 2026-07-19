@@ -1,10 +1,8 @@
 package com.own.virtualaibox;
 
 import com.own.virtualaibox.grid.GridTest;
-import com.own.virtualaibox.grid.VirtualClock;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.List;
 
 import static java.lang.Thread.sleep;

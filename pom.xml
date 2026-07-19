@@ -14,7 +14,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <!-- <spring-ai.version>2.0.0-M6</spring-ai.version> -->
+        <langchain4j.version>1.0.1-beta6</langchain4j.version>
     </properties>
 
     <dependencies>
@@ -84,6 +84,27 @@
             <scope>test</scope>
         </dependency>
         -->
+        <!-- langchain4j整合spring -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <!-- 流式调用 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-reactor</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
     </dependencies>
 
     <!-- 暂时用不到
