@@ -1,219 +1,983 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Agent Sandbox Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual AI Box | Sandbox Control Center</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #07111f;
+            --bg-2: #0c1628;
+            --panel: rgba(13, 22, 40, 0.78);
+            --panel-strong: rgba(15, 28, 51, 0.96);
+            --line: rgba(120, 159, 214, 0.18);
+            --line-strong: rgba(120, 159, 214, 0.28);
+            --text: #e9f0ff;
+            --muted: #92a4c4;
+            --accent: #5eead4;
+            --accent-2: #7c8cff;
+            --accent-3: #ffb86b;
+            --danger: #ff6b88;
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+            --radius: 20px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at top left, rgba(124, 140, 255, 0.24), transparent 28%),
+                radial-gradient(circle at right center, rgba(94, 234, 212, 0.14), transparent 24%),
+                linear-gradient(180deg, #050b14 0%, var(--bg) 100%);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
         body {
-            background: #1a1a2e; color: #e0e0e0; font-family: 'JetBrains Mono', monospace;
-            display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh;
+            padding: 24px;
         }
-        h1 { color: #e94560; margin-bottom: 16px; font-size: 1.4rem; letter-spacing: 2px; }
 
-        #canvas-wrapper { position: relative; margin-bottom: 16px; }
-        canvas { border: 2px solid #0f3460; border-radius: 8px; background: #16213e; }
+        .shell {
+            max-width: 1700px;
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
 
-        #controls { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
+        .hero {
+            display: grid;
+            grid-template-columns: 1.7fr 1fr;
+            gap: 18px;
+        }
+
+        .brand, .panel, .metric, .pill, .agent-card, .event-card, .memory-card {
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(17, 29, 49, 0.92), rgba(10, 18, 32, 0.9));
+            backdrop-filter: blur(14px);
+            box-shadow: var(--shadow);
+        }
+
+        .brand {
+            border-radius: 28px;
+            padding: 26px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand::after {
+            content: "";
+            position: absolute;
+            inset: auto -15% -35% auto;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(94, 234, 212, 0.18), transparent 62%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(94, 234, 212, 0.25);
+            background: rgba(94, 234, 212, 0.08);
+            color: var(--accent);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 14px 0 10px;
+            font-size: clamp(32px, 4vw, 58px);
+            line-height: 1.02;
+        }
+
+        .lead {
+            margin: 0;
+            max-width: 860px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .hero-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            border-radius: 18px;
+            padding: 14px 16px;
+        }
+
+        .metric .label {
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .metric .value {
+            margin-top: 8px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .metric .hint {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .status-panel {
+            border-radius: 28px;
+            padding: 20px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .pill {
+            border-radius: 16px;
+            padding: 14px 16px;
+        }
+
+        .pill .name {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .pill .data {
+            font-size: 15px;
+            line-height: 1.55;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .panel {
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(90deg, rgba(124, 140, 255, 0.12), transparent);
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .panel-body {
+            padding: 18px 20px 20px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            align-items: center;
+        }
+
+        .control-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .control-box label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .control-box input[type="range"],
+        .control-box input[type="search"] {
+            width: 100%;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         button {
-            padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer;
-            font-family: inherit; transition: all 0.2s; font-weight: 600; letter-spacing: 1px;
+            appearance: none;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            color: #08111d;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .18s ease, filter .18s ease, opacity .18s ease;
         }
-        button:hover { transform: translateY(-1px); filter: brightness(1.2); }
+
+        button:hover { transform: translateY(-1px); }
         button:active { transform: translateY(0); }
 
-        #btn-step { background: #e94560; color: #fff; }
-        #btn-auto { background: #0f3460; color: #e0e0e0; }
-        #btn-auto.running { background: #e94560; }
-        #btn-reset { background: #333; color: #e0e0e0; }
-
-        #info-bar { display: flex; gap: 24px; font-size: 0.9rem; color: #a0a0b0; margin-bottom: 12px; }
-        .info-item { background: #0f3460; padding: 6px 14px; border-radius: 20px; }
-        .info-value { color: #e94560; font-weight: bold; }
-
-        #agent-list {
-            display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 800px;
+        .primary { background: linear-gradient(135deg, var(--accent), #9ef7ea); }
+        .secondary { background: linear-gradient(135deg, #b0bbff, #8fb1ff); }
+        .ghost {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            border: 1px solid var(--line);
         }
-        .agent-card {
-            background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 10px 16px;
-            font-size: 0.8rem; min-width: 140px;
+
+        .danger {
+            background: linear-gradient(135deg, #ff92a7, var(--danger));
+            color: white;
         }
-        .agent-card .name { color: #e94560; font-weight: bold; font-size: 0.95rem; }
-        .agent-card .pos { color: #a0a0b0; margin-top: 4px; }
+
+        .canvas-shell {
+            padding: 16px;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            border-radius: 22px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            background:
+                radial-gradient(circle at center, rgba(94, 234, 212, 0.06), transparent 40%),
+                linear-gradient(180deg, #09111d, #070d18);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            pointer-events: none;
+        }
+
+        .overlay-tag {
+            padding: 8px 10px;
+            border-radius: 999px;
+            background: rgba(8, 15, 28, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            font-size: 12px;
+            backdrop-filter: blur(12px);
+        }
+
+        .list-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .agent-card, .event-card, .memory-card {
+            border-radius: 18px;
+            padding: 14px;
+        }
+
+        .agent-card.active {
+            border-color: rgba(94, 234, 212, 0.4);
+            box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.08), var(--shadow);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .agent-name, .event-type, .memory-type {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .kv {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .kv .item {
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--line);
+        }
+
+        .kv .item .k {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .kv .item .v {
+            margin-top: 6px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .section-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .section-scroll {
+            max-height: 530px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .section-scroll::-webkit-scrollbar { width: 8px; }
+        .section-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+        }
+
+        .subtle {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            font-size: 12px;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .footer-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .loading {
+            color: var(--muted);
+            padding: 14px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .empty {
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px dashed var(--line-strong);
+            color: var(--muted);
+            text-align: center;
+        }
+
+        @media (max-width: 1320px) {
+            .hero, .workspace, .split { grid-template-columns: 1fr; }
+            .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 860px) {
+            body { padding: 14px; }
+            .hero-meta, .status-grid, .kv, .controls { grid-template-columns: 1fr; }
+            .canvas-shell, .panel-body, .brand, .status-panel { padding-left: 14px; padding-right: 14px; }
+        }
     </style>
 </head>
 <body>
-<h1>⚙️ Agent Sandbox</h1>
+<div class="shell">
+    <section class="hero">
+        <div class="brand">
+            <div class="eyebrow">Virtual AI Box · Sandbox Control Center</div>
+            <h1>让 Agent 记住世界，也让世界记住事件。</h1>
+            <p class="lead">
+                这是一个可演示、可扩展的 AI 沙盒前端：它同步显示世界状态、Agent 记忆、事件流和执行过程，
+                为后续接入经营、社交、任务、战斗等系统保留了统一入口。
+            </p>
 
-<div id="canvas-wrapper">
-    <canvas id="world" width="600" height="400"></canvas>
+            <div class="hero-meta">
+                <div class="metric">
+                    <div class="label">Current Tick</div>
+                    <div class="value" id="tick-display">0</div>
+                    <div class="hint">虚拟时钟推进中的当前刻度</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Active Agents</div>
+                    <div class="value" id="agent-count">0</div>
+                    <div class="hint">正在参与决策的智能体数量</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Event History</div>
+                    <div class="value" id="event-count">0</div>
+                    <div class="hint">事件总线已记录的历史事件数</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel status-panel">
+            <div>
+                <div class="panel-title">System Status</div>
+                <div class="panel-subtitle">快速查看核心运行指标和系统能力</div>
+            </div>
+            <div class="status-grid">
+                <div class="pill">
+                    <div class="name">World Size</div>
+                    <div class="data" id="world-size">-</div>
+                </div>
+                <div class="pill">
+                    <div class="name">Event Subscribers</div>
+                    <div class="data" id="subscriber-count">-</div>
+                </div>
+                <div class="pill">
+                    <div class="name">Memory Coverage</div>
+                    <div class="data" id="memory-coverage">-</div>
+                </div>
+                <div class="pill">
+                    <div class="name">Mode</div>
+                    <div class="data">Event + Memory Driven</div>
+                </div>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item"><span>架构</span><span>WorldEngine → TickSchedule → EventBus</span></div>
+                <div class="timeline-item"><span>决策</span><span>LLMBrain + AgentMemory</span></div>
+                <div class="timeline-item"><span>扩展方向</span><span>经营 / 社交 / 战斗 / 任务 / 资源</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">Simulation Controls</div>
+                <div class="panel-subtitle">单步、自动播放、刷新、过滤和节流</div>
+            </div>
+            <div class="control-row">
+                <button class="primary" id="btn-step">Step Tick</button>
+                <button class="secondary" id="btn-auto">Auto Run</button>
+                <button class="ghost" id="btn-refresh">Refresh</button>
+                <button class="danger" id="btn-stop">Stop</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="controls">
+                <div class="control-box">
+                    <label for="speed-range">Auto Speed: <span id="speed-value">650ms</span></label>
+                    <input id="speed-range" type="range" min="120" max="2000" step="10" value="650">
+                </div>
+                <div class="control-box">
+                    <label for="event-limit">Event Limit</label>
+                    <input id="event-limit" type="range" min="10" max="120" step="5" value="40">
+                </div>
+                <div class="control-box">
+                    <label for="memory-limit">Memory Limit</label>
+                    <input id="memory-limit" type="range" min="3" max="20" step="1" value="8">
+                </div>
+                <div class="control-box">
+                    <label for="agent-filter">Filter Agent / Event</label>
+                    <input id="agent-filter" type="search" placeholder="输入名字、事件类型或关键字">
+                </div>
+            </div>
+            <div class="footer-line">
+                <span>快捷键：Space = 单步，A = 自动运行，R = 刷新</span>
+                <span id="last-sync">Last sync: -</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="workspace">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <div class="panel-title">World Map</div>
+                    <div class="panel-subtitle">37x37 网格世界的可视化运行态</div>
+                </div>
+                <div class="badge" id="render-status">Idle</div>
+            </div>
+            <div class="canvas-shell">
+                <div class="canvas-wrap">
+                    <div class="canvas-overlay">
+                        <span class="overlay-tag" id="overlay-tick">Tick 0</span>
+                        <span class="overlay-tag" id="overlay-world">World 37×37</span>
+                        <span class="overlay-tag" id="overlay-agent">Agents 0</span>
+                    </div>
+                    <canvas id="world" width="960" height="960"></canvas>
+                </div>
+                <div class="footer-line">
+                    <span>网格颜色、Agent 光晕和轨迹都用于强调可读性，后续可切换到资源地图、地形图或视野图层。</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="split">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Agents & Memory</div>
+                        <div class="panel-subtitle">查看位置、状态、记忆摘要和最近记忆</div>
+                    </div>
+                    <div class="badge" id="agent-card-count">0 items</div>
+                </div>
+                <div class="panel-body section-scroll">
+                    <div class="list-grid" id="agent-list">
+                        <div class="loading">Loading agents...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Event Stream</div>
+                        <div class="panel-subtitle">按时间展示 Tick、移动、相遇、决策等事件</div>
+                    </div>
+                    <div class="badge" id="event-card-count">0 items</div>
+                </div>
+                <div class="panel-body section-scroll">
+                    <div class="list-grid" id="event-list">
+                        <div class="loading">Loading events...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
-
-<div id="controls">
-    <button id="btn-step" onclick="step()">▶ 单步 Tick</button>
-    <button id="btn-auto" onclick="toggleAuto()">⏱ 自动运行</button>
-    <button id="btn-reset" onclick="reset()">↺ 重置</button>
-</div>
-
-<div id="info-bar">
-    <span class="info-item">Tick: <span class="info-value" id="tick-display">0</span></span>
-    <span class="info-item">Agents: <span class="info-value" id="agent-count">0</span></span>
-    <span class="info-item">FPS: <span class="info-value" id="fps-display">0</span></span>
-</div>
-
-<div id="agent-list"></div>
 
 <script>
     const canvas = document.getElementById('world');
     const ctx = canvas.getContext('2d');
 
-    // ===== 世界参数（根据你的后端调整） =====
-    const WORLD_WIDTH = 37;   // 网格列数
-    const WORLD_HEIGHT = 37;  // 网格行数
-    const CELL_SIZE = 20;     // 像素/格
-    canvas.width = WORLD_WIDTH * CELL_SIZE;
-    canvas.height = WORLD_HEIGHT * CELL_SIZE;
+    const state = {
+        dashboard: null,
+        autoRunning: false,
+        autoTimer: null,
+        autoSpeed: 650,
+        eventLimit: 40,
+        memoryLimit: 8,
+        filterText: '',
+        worldWidth: 37,
+        worldHeight: 37,
+        cellSize: 24,
+        selectedAgentId: null,
+    };
 
-    let autoRunning = false;
-    let autoInterval = null;
-    const AUTO_INTERVAL_MS = 500; // 自动时每500ms走一个Tick
-
-    // ===== 核心：从后端拉数据并渲染 =====
-    async function fetchState() {
-        const res = await fetch('/state');
-        return await res.json();
+    function setStatus(text) {
+        document.getElementById('render-status').textContent = text;
     }
 
-    async function step() {
-        const res = await fetch('/step');
-        const data = await res.json();
-        render(data);
+    function formatTime(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
     }
 
-    async function refreshState() {
-        const data = await fetchState();
-        render(data);
+    async function fetchDashboard() {
+        setStatus('Syncing');
+        const response = await fetch(`/api/dashboard?eventLimit=${state.eventLimit}&memoryLimit=${state.memoryLimit}`);
+        if (!response.ok) {
+            throw new Error(`Dashboard request failed: ${response.status}`);
+        }
+        return response.json();
     }
 
-    // ===== 渲染 =====
+    async function stepTick() {
+        setStatus('Stepping');
+        const response = await fetch('/step');
+        if (!response.ok) {
+            throw new Error(`Step request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        await refreshDashboard(data.tick);
+    }
+
+    async function refreshDashboard(preferredTick = null) {
+        try {
+            const data = await fetchDashboard();
+            state.dashboard = data;
+            render(data);
+            if (preferredTick !== null && data.tick !== preferredTick) {
+                document.getElementById('last-sync').textContent = `Last sync: tick ${data.tick}`;
+            }
+            setStatus('Live');
+        } catch (error) {
+            console.error(error);
+            setStatus('Offline');
+            document.getElementById('event-list').innerHTML = `<div class="empty">${error.message}</div>`;
+        }
+    }
+
+    function applyFilter(items, matcher) {
+        if (!matcher) return items;
+        return items.filter(matcher);
+    }
+
     function render(data) {
-        // 更新数字
-        document.getElementById('tick-display').textContent = data.tick;
-        document.getElementById('agent-count').textContent = data.agents.length;
-
-        // 清画布
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawGrid();
-
-        // 画Agent
-        const colors = ['#e94560', '#0f3460', '#51cf66', '#f0a500', '#339af0', '#cc5de8'];
-        data.agents.forEach((agent, i) => {
-            const color = colors[i % colors.length];
-            const px = agent.x * CELL_SIZE + CELL_SIZE / 2;
-            const py = agent.y * CELL_SIZE + CELL_SIZE / 2;
-
-            // 光晕
-            ctx.beginPath();
-            ctx.arc(px, py, 10, 0, Math.PI * 2);
-            ctx.fillStyle = color + '33';
-            ctx.fill();
-
-            // 主体圆点
-            ctx.beginPath();
-            ctx.arc(px, py, 6, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // 名字
-            ctx.fillStyle = '#fff';
-            ctx.font = '9px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(agent.name, px, py - 12);
+        const agents = applyFilter(data.agents ?? [], agent => {
+            const text = state.filterText.toLowerCase();
+            if (!text) return true;
+            return [agent.name, agent.id, agent.memorySummary, JSON.stringify(agent.recentMemories ?? [])]
+                .join(' ')
+                .toLowerCase()
+                .includes(text);
         });
 
-        // 更新Agent卡片列表
-        updateAgentCards(data.agents);
+        const events = applyFilter(data.events ?? [], event => {
+            const text = state.filterText.toLowerCase();
+            if (!text) return true;
+            return [event.eventType, event.description, event.sourceSystem, JSON.stringify(event.detail ?? {})]
+                .join(' ')
+                .toLowerCase()
+                .includes(text);
+        });
+
+        const world = data.world ?? {};
+        const metrics = data.metrics ?? {};
+
+        state.worldWidth = world.width ?? 37;
+        state.worldHeight = world.height ?? 37;
+        state.cellSize = Math.floor(Math.min(960 / state.worldWidth, 960 / state.worldHeight));
+        canvas.width = state.worldWidth * state.cellSize;
+        canvas.height = state.worldHeight * state.cellSize;
+
+        document.getElementById('tick-display').textContent = data.tick ?? 0;
+        document.getElementById('agent-count').textContent = agents.length;
+        document.getElementById('event-count').textContent = events.length;
+        document.getElementById('world-size').textContent = `${world.width ?? '-'} × ${world.height ?? '-'}`;
+        document.getElementById('subscriber-count').textContent = metrics.eventSubscriberCount ?? '-';
+        document.getElementById('memory-coverage').textContent = `${agents.filter(a => a.memoryStats).length}/${agents.length || 1} agents`;
+        document.getElementById('overlay-tick').textContent = `Tick ${data.tick ?? 0}`;
+        document.getElementById('overlay-world').textContent = `World ${state.worldWidth}×${state.worldHeight}`;
+        document.getElementById('overlay-agent').textContent = `Agents ${agents.length}`;
+        document.getElementById('agent-card-count').textContent = `${agents.length} items`;
+        document.getElementById('event-card-count').textContent = `${events.length} items`;
+        document.getElementById('last-sync').textContent = `Last sync: ${formatTime(metrics.serverTime)}`;
+
+        drawWorld(agents, data.tick ?? 0);
+        renderAgentList(agents, data.tick ?? 0);
+        renderEventList(events);
     }
 
-    function drawGrid() {
-        ctx.strokeStyle = '#0f3460';
-        ctx.lineWidth = 0.5;
-        for (let x = 0; x <= WORLD_WIDTH; x++) {
+    function drawWorld(agents, tick) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const gridColor = 'rgba(124, 140, 255, 0.12)';
+        const majorGridColor = 'rgba(124, 140, 255, 0.22)';
+
+        for (let x = 0; x <= state.worldWidth; x++) {
             ctx.beginPath();
-            ctx.moveTo(x * CELL_SIZE, 0);
-            ctx.lineTo(x * CELL_SIZE, canvas.height);
+            ctx.moveTo(x * state.cellSize + 0.5, 0);
+            ctx.lineTo(x * state.cellSize + 0.5, canvas.height);
+            ctx.strokeStyle = x % 5 === 0 ? majorGridColor : gridColor;
+            ctx.lineWidth = x % 5 === 0 ? 1.2 : 0.7;
             ctx.stroke();
         }
-        for (let y = 0; y <= WORLD_HEIGHT; y++) {
+
+        for (let y = 0; y <= state.worldHeight; y++) {
             ctx.beginPath();
-            ctx.moveTo(0, y * CELL_SIZE);
-            ctx.lineTo(canvas.width, y * CELL_SIZE);
+            ctx.moveTo(0, y * state.cellSize + 0.5);
+            ctx.lineTo(canvas.width, y * state.cellSize + 0.5);
+            ctx.strokeStyle = y % 5 === 0 ? majorGridColor : gridColor;
+            ctx.lineWidth = y % 5 === 0 ? 1.2 : 0.7;
             ctx.stroke();
         }
+
+        const colors = ['#5eead4', '#7c8cff', '#ffb86b', '#ff6b88', '#9ef7ea', '#9bffd9'];
+        const occupied = new Map();
+
+        agents.forEach((agent, index) => {
+            const key = `${agent.x},${agent.y}`;
+            occupied.set(key, (occupied.get(key) ?? 0) + 1);
+        });
+
+        agents.forEach((agent, index) => {
+            const color = colors[index % colors.length];
+            const x = agent.x * state.cellSize + state.cellSize / 2;
+            const y = agent.y * state.cellSize + state.cellSize / 2;
+            const stack = occupied.get(`${agent.x},${agent.y}`) ?? 1;
+            const radius = stack > 1 ? 8 : 7;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius * 2.1, 0, Math.PI * 2);
+            ctx.fillStyle = `${color}22`;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+
+            if (agent.id === state.selectedAgentId) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#f7fbff';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(agent.name, x, y - 13);
+
+            if (stack > 1) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x + 14, y - 14, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#07111f';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.fillText(stack, x + 14, y - 11);
+            }
+        });
+
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`tick ${tick}`, 14, 20);
     }
 
-    function updateAgentCards(agents) {
+    function renderAgentList(agents, tick) {
         const container = document.getElementById('agent-list');
-        container.innerHTML = agents.map(a => `
-                <div class="agent-card">
-                    <div class="name">${a.name}</div>
-                    <div class="pos">📍 (${a.x}, ${a.y})</div>
-                    <div class="pos">🆔 ${a.id}</div>
-                </div>
-            `).join('');
-    }
-
-    // ===== 控制按钮 =====
-    function toggleAuto() {
-        const btn = document.getElementById('btn-auto');
-        if (autoRunning) {
-            clearInterval(autoInterval);
-            btn.textContent = '⏱ 自动运行';
-            btn.classList.remove('running');
-            autoRunning = false;
-        } else {
-            autoInterval = setInterval(step, AUTO_INTERVAL_MS);
-            btn.textContent = '⏸ 停止自动';
-            btn.classList.add('running');
-            autoRunning = true;
+        if (!agents.length) {
+            container.innerHTML = '<div class="empty">当前没有 Agent 数据。</div>';
+            return;
         }
+
+        container.innerHTML = agents.map(agent => {
+            const memorySummary = (agent.memorySummary || '').trim();
+            const recentMemories = agent.recentMemories || [];
+            const memoryLines = recentMemories.length
+                ? recentMemories.map(item => `<div class="timeline-item"><span>Tick ${item.tick}</span><span>${escapeHtml(item.content || '')}</span></div>`).join('')
+                : '<div class="empty">暂无最近记忆</div>';
+
+            return `
+                <article class="agent-card ${state.selectedAgentId === agent.id ? 'active' : ''}" data-agent-id="${escapeHtml(agent.id)}">
+                    <div class="card-top">
+                        <div>
+                            <div class="agent-name">${escapeHtml(agent.name || 'Unknown')}</div>
+                            <div class="subtle">${escapeHtml(agent.id || '')}</div>
+                        </div>
+                        <div class="badge">${agent.active ? 'Active' : 'Inactive'}</div>
+                    </div>
+                    <div class="kv">
+                        <div class="item"><div class="k">Position</div><div class="v">(${agent.x}, ${agent.y})</div></div>
+                        <div class="item"><div class="k">Event History</div><div class="v">${agent.eventHistorySize ?? 0}</div></div>
+                    </div>
+                    <div class="kv" style="margin-top:10px;">
+                        <div class="item"><div class="k">Memory Entries</div><div class="v">${agent.memoryStats?.totalCount ?? 0}</div></div>
+                        <div class="item"><div class="k">Tick</div><div class="v">${tick}</div></div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <div class="subtle" style="margin-bottom: 8px;">Memory Summary</div>
+                        <div class="pill" style="background: rgba(255,255,255,0.03);">${memorySummary ? escapeHtml(memorySummary).replace(/\n/g, '<br>') : '暂无摘要'}</div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <div class="subtle" style="margin-bottom: 8px;">Recent Memories</div>
+                        <div class="timeline">${memoryLines}</div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        container.querySelectorAll('[data-agent-id]').forEach(node => {
+            node.addEventListener('click', () => {
+                state.selectedAgentId = node.getAttribute('data-agent-id');
+                renderAgentList(agents, tick);
+                if (state.dashboard) {
+                    drawWorld(agents, state.dashboard.tick ?? 0);
+                }
+            });
+        });
     }
 
-    async function reset() {
-        // 需要你在后端实现 /reset 接口
-        await fetch('/reset', { method: 'POST' });
-        refreshState();
+    function renderEventList(events) {
+        const container = document.getElementById('event-list');
+        if (!events.length) {
+            container.innerHTML = '<div class="empty">当前没有事件记录。</div>';
+            return;
+        }
+
+        container.innerHTML = events.map(event => `
+            <article class="event-card">
+                <div class="card-top">
+                    <div>
+                        <div class="event-type">${escapeHtml(event.eventType || 'event')}</div>
+                        <div class="subtle">${escapeHtml(event.description || '')}</div>
+                    </div>
+                    <div class="badge">Tick ${event.tick ?? '-'}</div>
+                </div>
+                <div class="kv">
+                    <div class="item"><div class="k">Source</div><div class="v">${escapeHtml(event.sourceSystem || '-')}</div></div>
+                    <div class="item"><div class="k">Priority</div><div class="v">${event.priority ?? '-'}</div></div>
+                </div>
+                <div class="footer-line" style="margin-top:12px;">
+                    <span>${escapeHtml(formatTime(event.timestamp))}</span>
+                    <span>${event.processed ? 'Processed' : 'Pending'}</span>
+                </div>
+                ${event.detail ? `<div class="pill" style="margin-top: 12px; background: rgba(255,255,255,0.03);">${escapeHtml(JSON.stringify(event.detail, null, 2)).replace(/\n/g, '<br>')}</div>` : ''}
+            </article>
+        `).join('');
     }
 
-    // ===== 键盘快捷键 =====
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
-            e.preventDefault();
-            step();
-        } else if (e.code === 'KeyA') {
-            toggleAuto();
+    function escapeHtml(text) {
+        return String(text)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function startAutoRun() {
+        stopAutoRun();
+        state.autoRunning = true;
+        document.getElementById('btn-auto').textContent = 'Auto Running';
+        document.getElementById('btn-auto').style.opacity = '0.88';
+        state.autoTimer = setInterval(async () => {
+            try {
+                await stepTick();
+            } catch (error) {
+                console.error(error);
+                stopAutoRun();
+            }
+        }, state.autoSpeed);
+    }
+
+    function stopAutoRun() {
+        if (state.autoTimer) {
+            clearInterval(state.autoTimer);
+            state.autoTimer = null;
+        }
+        state.autoRunning = false;
+        const button = document.getElementById('btn-auto');
+        button.textContent = 'Auto Run';
+        button.style.opacity = '1';
+    }
+
+    function toggleAutoRun() {
+        if (state.autoRunning) {
+            stopAutoRun();
+            return;
+        }
+        startAutoRun();
+    }
+
+    document.getElementById('btn-step').addEventListener('click', stepTick);
+    document.getElementById('btn-auto').addEventListener('click', toggleAutoRun);
+    document.getElementById('btn-refresh').addEventListener('click', () => refreshDashboard());
+    document.getElementById('btn-stop').addEventListener('click', stopAutoRun);
+
+    document.getElementById('speed-range').addEventListener('input', event => {
+        state.autoSpeed = Number(event.target.value);
+        document.getElementById('speed-value').textContent = `${state.autoSpeed}ms`;
+        if (state.autoRunning) {
+            startAutoRun();
         }
     });
 
-    // ===== 初始加载 =====
-    refreshState();
-    drawGrid();
+    document.getElementById('event-limit').addEventListener('input', event => {
+        state.eventLimit = Number(event.target.value);
+        if (state.dashboard) refreshDashboard();
+    });
 
-    // FPS 计数器（简易）
-    let lastTime = performance.now();
-    let frameCount = 0;
-    setInterval(() => {
-        frameCount++;
-        const now = performance.now();
-        if (now - lastTime >= 1000) {
-            document.getElementById('fps-display').textContent = frameCount;
-            frameCount = 0;
-            lastTime = now;
+    document.getElementById('memory-limit').addEventListener('input', event => {
+        state.memoryLimit = Number(event.target.value);
+        if (state.dashboard) refreshDashboard();
+    });
+
+    document.getElementById('agent-filter').addEventListener('input', event => {
+        state.filterText = event.target.value.trim();
+        if (state.dashboard) render(state.dashboard);
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.code === 'Space') {
+            event.preventDefault();
+            stepTick();
         }
-    }, 1000);
+        if (event.code === 'KeyA') {
+            toggleAutoRun();
+        }
+        if (event.code === 'KeyR') {
+            refreshDashboard();
+        }
+    });
+
+    document.getElementById('speed-value').textContent = `${state.autoSpeed}ms`;
+
+    refreshDashboard();
+    setInterval(() => {
+        if (!state.autoRunning) {
+            refreshDashboard();
+        }
+    }, 5000);
 </script>
 </body>
 </html>

@@ -48,14 +48,16 @@ public class LLMBrain {
     private String buildPrompt(Agent agent, WorldState worldState) {
         StringBuilder sb = new StringBuilder();
         
-        sb.append("你是一个AI智能体，正在一个100x100的网格世界中行动。\n\n");
-        sb.append("当前状态：\n");
+        sb.append("你是一个AI智能体，正在一个37x37的网格世界中行动。\n");
+        sb.append("你有记忆能力，可以基于过去的经历做出更好的决策。\n\n");
+        
+        sb.append("=== 当前状态 ===\n");
         sb.append("- 当前时间tick：").append(worldState.getTick()).append("\n");
         sb.append("- 你的名字：").append(agent.getName()).append("\n");
         sb.append("- 你的位置：(").append(agent.getState().getX()).append(", ")
                 .append(agent.getState().getY()).append(")\n\n");
         
-        sb.append("世界中其他智能体：\n");
+        sb.append("=== 世界中的其他智能体 ===\n");
         for (Map.Entry<String, AgentState> entry : worldState.getAgentStates().entrySet()) {
             if (!entry.getKey().equals(agent.getId())) {
                 sb.append("- ").append(entry.getValue().getName())
@@ -64,12 +66,27 @@ public class LLMBrain {
             }
         }
         
-        sb.append("\n请决定你的下一步行动。你可以向x和y方向各移动-1、0或+1格。\n");
-        sb.append("请以JSON格式返回，格式如下：\n");
+        // 添加记忆上下文
+        if (agent.getMemory() != null) {
+            String memorySummary = agent.getMemory().summarizeMemoriesForLLM(worldState.getTick());
+            if (!memorySummary.isEmpty()) {
+                sb.append("\n=== 你的记忆 ===\n");
+                sb.append(memorySummary);
+            }
+        }
+        
+        sb.append("\n=== 任务 ===\n");
+        sb.append("请根据当前情况和你的记忆，决定你的下一步行动。\n");
+        sb.append("你可以向x和y方向各移动-1、0或+1格。\n");
+        sb.append("请考虑：\n");
+        sb.append("1. 你之前访问过的位置\n");
+        sb.append("2. 你遇见过的其他Agent\n");
+        sb.append("3. 学到的规律和模式\n\n");
+        sb.append("请以JSON格式返回你的决策，格式如下：\n");
         sb.append("{\n");
         sb.append("  \"deltaX\": -1到1之间的整数,\n");
         sb.append("  \"deltaY\": -1到1之间的整数,\n");
-        sb.append("  \"reason\": \"简短的决策理由\"\n");
+        sb.append("  \"reason\": \"你的决策理由，考虑了哪些因素\"\n");
         sb.append("}\n");
         sb.append("只返回JSON，不要其他文字。");
         

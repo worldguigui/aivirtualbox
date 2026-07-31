@@ -54,3 +54,7 @@ TickSchedule.processTick()
     LLMBrain.decideAction()  (决策)
     ActionExecutor.executeMoveAction()  (执行)
 ```
+
+
+# 二.vabv2.0
+增加事件系统、记忆系统、可视化界面。
