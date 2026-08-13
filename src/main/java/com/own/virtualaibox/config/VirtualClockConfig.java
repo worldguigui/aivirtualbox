@@ -21,4 +21,6 @@ public class VirtualClockConfig {
         this.metaInstant = properties.getMetaInstant();
         this.interval = properties.getInterval();
     }
+
+
 }

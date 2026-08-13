@@ -19,6 +19,7 @@ public class VirtualClock {
     // 当前时间步长
     // 时间步长由配置文件决定，不对外提供修改接口
     // 单位是秒
+    // 跟现实世界的时间流速。
     private int interval;
 
     // 构造器注入

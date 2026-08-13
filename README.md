@@ -9,14 +9,14 @@
 1. **WorldEngine** - 世界引擎，驱动整个流程
 2. **VirtualClock** - 虚拟时钟，管理时间刻度
 3. **TickSchedule** - 时间调度器，协调AI决策和动作执行
-4. **LLMBrain** - AI大脑，负责决策（当前使用随机策略）
+4. **LLMBrain** - AI大脑，负责调用LLM进行决策
 5. **ActionExecutor** - 动作执行器，执行移动动作
 
 ### 2.数据模型
 - **World** - 世界容器，包含所有Agent
 - **Agent** - AI智能体
 - **AgentState** - Agent状态（位置等）
-- **WorldState** - 世界状态快照
+- **WorldState** - 世界状态快照（尺寸等）
 - **MoveAction** - 移动动作
 
 ### 3.启动应用
@@ -56,5 +56,5 @@ TickSchedule.processTick()
 ```
 
 
-# 二.vabv2.0
+# 二.vab2.0
 增加事件系统、记忆系统、可视化界面。

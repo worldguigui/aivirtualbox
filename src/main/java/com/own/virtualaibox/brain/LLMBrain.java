@@ -27,6 +27,7 @@ public class LLMBrain {
         this.random = new Random();
     }
 
+
     public MoveAction decideAction(Agent agent, WorldState worldState) {
         log.info("LLMBrain: Deciding action for agent: {}", agent.getName());
         
@@ -44,6 +45,7 @@ public class LLMBrain {
             return randomDecision(agent.getId());
         }
     }
+
 
     private String buildPrompt(Agent agent, WorldState worldState) {
         StringBuilder sb = new StringBuilder();
