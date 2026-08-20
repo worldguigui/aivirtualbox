@@ -1,22 +1,11 @@
 server:
   port: 8080
 
-langchain4j:
-  open-ai:
-    chat-model:
-      base-url: https://api.deepseek.com
-      api-key: sk-ea89d7fd7c7a45059433c9ecdb257cfb
-      model-name: deepseek-chat
-      log-responses: false
-      log-requests: false
-    streaming-chat-model:
-      base-url: https://api.deepseek.com
-      api-key: sk-ea89d7fd7c7a45059433c9ecdb257cfb
-      model-name: deepseek-chat
-      log-responses: false
-      log-requests: false
-
 spring:
+  config:
+    import:
+      - optional:classpath:secrets.yml
+
   application:
     name:
       VirtualAIBox
@@ -28,4 +17,20 @@ spring:
     interval: 30
     # 元时间：虚拟时钟的起始时间
     meta-instant: 2026-06-03T00:00:00+08:00
+
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com
+      api-key: ${secrets.apikey.deepseek}
+      model-name: deepseek-chat
+      log-responses: false
+      log-requests: false
+    streaming-chat-model:
+      base-url: https://api.deepseek.com
+      api-key: ${secrets.apikey.deepseek}
+      model-name: deepseek-chat
+      log-responses: false
+      log-requests: false
+
 

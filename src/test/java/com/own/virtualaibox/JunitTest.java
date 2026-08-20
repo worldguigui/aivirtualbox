@@ -17,6 +17,7 @@ public class JunitTest {
         for (String id : ids) {
             System.out.println(id);
         }
+        System.out.println("DEEPSEEK_API_KEY = " + System.getenv("DEEPSEEK_API_KEY"));
     }
 
 }
