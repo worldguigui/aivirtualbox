@@ -77,7 +77,7 @@ public class TickSchedule {
      * Phase 2: 决策阶段
      */
     private Map<String, MoveAction> decisionPhase(int tick, World world) {
-        log.info("TickSchedule: Entering decision phase");
+        log.info("TickSchedule: Entering decision phase, current tick: {}", tick);
         
         WorldState worldState = buildWorldState(tick, world);
         Map<String, MoveAction> decisions = new HashMap<>();
@@ -97,7 +97,7 @@ public class TickSchedule {
      * Phase 3: 执行阶段
      */
     private void executionPhase(int tick, Map<String, MoveAction> decisions, World world) {
-        log.info("TickSchedule: Entering execution phase");
+        log.info("TickSchedule: Entering execution phase, current tick: {}", tick);
         
         for (MoveAction action : decisions.values()) {
             actionExecutor.executeMoveAction(action, world);
@@ -108,7 +108,7 @@ public class TickSchedule {
      * Phase 4: 交互检测阶段
      */
     private void interactionPhase(int tick, World world) {
-        log.info("TickSchedule: Entering interaction detection phase");
+        log.info("TickSchedule: Entering interaction detection phase, current tick: {}", tick);
         
         List<Agent> agents = world.getAgents();
         

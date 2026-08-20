@@ -8,29 +8,28 @@ import lombok.NoArgsConstructor;
 /**
  * Agent决策事件
  * 当LLMBrain做出决策时发布
- * 可用于：决策追踪、学习反馈等
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgentDecidedEvent extends DomainEvent {
     
-    /** 做出决策的Agent ID */
+    // 做出决策的Agent ID
     private String agentId;
     
-    /** Agent名称 */
+    // Agent名称
     private String agentName;
     
-    /** 决策类型 */
+    // 决策类型
     private String actionType;  // e.g., "move", "interact", "wait"
     
-    /** 决策详情（JSON字符串） */
+    // 决策详情（JSON字符串）
     private String actionDetails;
     
-    /** 决策理由 */
+    // 决策理由
     private String reasoning;
     
-    /** 是否由LLM决策（true）还是降级到随机决策（false） */
+    // 是否由LLM决策（true）还是降级到随机决策（false）
     private boolean llmDecision;
     
     @Override

@@ -8,17 +8,17 @@ import lombok.NoArgsConstructor;
 /**
  * 时钟周期结束事件
  * 在每个Tick结束时发布
- * 优先级: LOW
+ * 优先级: LOWEST，最低，代表着在所有事件执行后执行
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class TickEndedEvent extends DomainEvent {
     
-    /** 本Tick处理的事件数量 */
+    // 本Tick处理的事件数量
     private int eventCount;
     
-    /** 本Tick的执行时间（毫秒） */
+    // 本Tick的执行时间（毫秒）
     private long executionTime;
     
     @Override

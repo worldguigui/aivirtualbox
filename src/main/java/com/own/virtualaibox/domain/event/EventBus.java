@@ -18,19 +18,19 @@ import java.util.concurrent.*;
 @Slf4j
 public class EventBus {
     
-    /** 事件类型 -> 监听者列表 */
+    // 事件类型 -> 监听者列表
     private final Map<String, List<EventListener>> subscribers = new ConcurrentHashMap<>();
     
-    /** 全局监听者（监听所有事件） */
+    // 全局监听者（监听所有事件）
     private final List<EventListener> globalListeners = new CopyOnWriteArrayList<>();
     
-    /** 事件历史记录 */
+    // 事件历史记录
     private final Deque<DomainEvent> eventHistory = new ConcurrentLinkedDeque<>();
     
-    /** 历史记录最大容量 */
-    private static final int MAX_HISTORY_SIZE = 10000;
+    // 历史记录最大容量
+    private static final int MAX_HISTORY_SIZE = 210;
     
-    /** 异步执行线程池 */
+    // 异步执行线程池
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
     
     /**
@@ -130,6 +130,7 @@ public class EventBus {
         List<EventListener> typeListeners = subscribers.getOrDefault(event.getEventType(), Collections.emptyList());
         listeners.addAll(typeListeners);
         
+        
         if (listeners.isEmpty()) {
             log.warn("EventBus: No listeners for event type: {}", event.getEventType());
             return;
@@ -164,6 +165,7 @@ public class EventBus {
     /**
      * 记录事件到历史
      */
+    @Deprecated
     private void recordEvent(DomainEvent event) {
         eventHistory.offerLast(event);
         // 保持历史大小限制

@@ -22,9 +22,23 @@
 ### 3.启动应用
 ```bash
 mvn.cmd spring-boot:run
-
-访问localhost:8080/index.html进行可视化调试
 ```
+
+前端(React)已迁移到 `frontend/` 目录(Vite + TypeScript + TanStack Query),由 Maven 构建时自动编译并嵌入 Spring Boot 静态资源。访问 `localhost:8080` 查看可视化界面。
+
+#### 前端开发(热更新)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite 开发服务器运行在 `localhost:5173`,已配置代理把 `/api`、`/step` 等请求转发到后端 `localhost:8080`,无需处理跨域。
+
+#### 前端构建(生产)
+
+`mvn package` 时 `frontend-maven-plugin` 会自动执行 `npm install && npm run build`,产物经 `maven-resources-plugin` 复制到 classpath 静态资源,最终内嵌进 jar。
 
 ### 4.API端点
 

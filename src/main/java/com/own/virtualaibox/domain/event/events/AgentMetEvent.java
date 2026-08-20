@@ -8,32 +8,31 @@ import lombok.NoArgsConstructor;
 /**
  * Agent相遇事件
  * 当两个Agent移动到相同或邻近位置时发布
- * 可用于：社交互动、战斗、交易等
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgentMetEvent extends DomainEvent {
     
-    /** 相遇的第一个Agent ID */
+    // 相遇的第一个Agent ID
     private String agentId1;
     
-    /** 第一个Agent的名称 */
+    // 第一个Agent的名称
     private String agentName1;
     
-    /** 相遇的第二个Agent ID */
+    // 相遇的第二个Agent ID
     private String agentId2;
     
-    /** 第二个Agent的名称 */
+    // 第二个Agent的名称
     private String agentName2;
     
-    /** 相遇位置X */
+    // 相遇位置X
     private int meetX;
     
-    /** 相遇位置Y */
+    // 相遇位置Y
     private int meetY;
     
-    /** 相遇距离 */
+    // 相遇距离
     private double distance;
     
     @Override

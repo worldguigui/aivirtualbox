@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 /**
  * Agent移动事件
  * 当Agent执行移动动作时发布此事件
- * 可用于：位置跟踪、碰撞检测、观察者通知等
  */
 @Data
 @NoArgsConstructor

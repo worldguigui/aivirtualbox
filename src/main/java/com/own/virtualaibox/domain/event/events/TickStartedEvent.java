@@ -10,14 +10,14 @@ import java.time.Instant;
 /**
  * 时钟周期开始事件
  * 在每个Tick开始时发布
- * 优先级: HIGH
+ * 优先级: HIGHEST，最高，代表着在所有事件执行前执行
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class TickStartedEvent extends DomainEvent {
     
-    /** 当前时间戳（秒） */
+    // 当前时间戳（秒）
     private Instant timestamp;
     
     @Override

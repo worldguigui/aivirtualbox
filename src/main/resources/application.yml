@@ -5,13 +5,13 @@ langchain4j:
   open-ai:
     chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-31470fe14fd14041ae6dbddd93ca2c2d
+      api-key: sk-ea89d7fd7c7a45059433c9ecdb257cfb
       model-name: deepseek-chat
       log-responses: false
       log-requests: false
     streaming-chat-model:
       base-url: https://api.deepseek.com
-      api-key: sk-31470fe14fd14041ae6dbddd93ca2c2d
+      api-key: sk-ea89d7fd7c7a45059433c9ecdb257cfb
       model-name: deepseek-chat
       log-responses: false
       log-requests: false
