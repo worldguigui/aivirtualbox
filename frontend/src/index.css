@@ -162,9 +162,15 @@ h1 {
 
 .workspace {
   display: grid;
-  grid-template-columns: 1.55fr 1fr;
+  grid-template-columns: 1.5fr 1.1fr 1.1fr;
   gap: 18px;
   align-items: start;
+}
+
+.right-col {
+  display: grid;
+  gap: 18px;
+  align-content: start;
 }
 
 .panel {
@@ -407,6 +413,114 @@ canvas {
   gap: 18px;
 }
 
+/* ===== P4: SECD Mind 可视化 ===== */
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.mind-registers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mind-register {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 96px;
+}
+
+.register-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.register-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-2);
+  letter-spacing: 0.04em;
+}
+
+.register-value {
+  font-size: 13px;
+  font-weight: 600;
+  word-break: break-all;
+  margin-bottom: 6px;
+  color: var(--accent-3);
+}
+
+.register-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+.register-list li {
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.d-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 10px 0 8px;
+}
+
+.d-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-3));
+  transition: width .3s ease;
+}
+
+/* SECD 状态徽标（覆盖 .badge 的配色，需定义在其后） */
+.mind-status-exec { background: rgba(94, 234, 212, 0.16); color: var(--accent); }
+.mind-status-susp { background: rgba(124, 140, 255, 0.18); color: var(--accent-2); }
+.mind-status-idle { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
+/* ===== P4: 收敛指示器 ===== */
+
+.conv-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+}
+
+.conv-ok { background: rgba(94, 234, 212, 0.07); color: var(--accent); }
+.conv-warn {
+  background: rgba(255, 107, 136, 0.12);
+  color: #ff9fb4;
+  border-color: rgba(255, 107, 136, 0.35);
+}
+
 .footer-line {
   display: flex;
   justify-content: space-between;
@@ -440,7 +554,7 @@ canvas {
 
 @media (max-width: 860px) {
   body { padding: 14px; }
-  .hero-meta, .status-grid, .kv, .controls { grid-template-columns: 1fr; }
+  .hero-meta, .status-grid, .kv, .controls, .mind-registers { grid-template-columns: 1fr; }
   .canvas-shell, .panel-body, .brand, .status-panel { padding-left: 14px; padding-right: 14px; }
 }
 

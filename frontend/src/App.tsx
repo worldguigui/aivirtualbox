@@ -7,6 +7,7 @@ import { SimulationControls } from './components/SimulationControls'
 import { WorldMap } from './components/WorldMap'
 import { AgentList } from './components/AgentList'
 import { EventList } from './components/EventList'
+import { MindViewer } from './components/MindViewer'
 
 /** 渲染状态徽标(由原 render-status badge 的 Idle/Syncing/Live/Stepping/Offline 语义迁移) */
 function deriveStatus(stepping: boolean, isError: boolean, isLoading: boolean, isFetching: boolean, hasData: boolean) {
@@ -51,6 +52,12 @@ export default function App() {
     [data, text],
   )
 
+  // 当前聚焦的 Agent：优先选中项，否则回退到第一个可见 Agent（供 SECD Mind 展示）
+  const focusedAgent = useMemo(
+    () => visibleAgents.find((agent) => agent.id === selectedAgentId) ?? visibleAgents[0] ?? null,
+    [visibleAgents, selectedAgentId],
+  )
+
   // 键盘快捷键:Space = 单步,A = 自动运行,R = 刷新
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -87,6 +94,7 @@ export default function App() {
           world={data?.world}
           metrics={data?.metrics}
           memoryCoverage={memoryCoverage}
+          convergence={data?.convergence}
         />
       </section>
 
@@ -117,12 +125,18 @@ export default function App() {
           selectedAgentId={selectedAgentId}
           status={status}
         />
-        <div className="split">
-          <AgentList
-            agents={visibleAgents}
+        <AgentList
+          agents={visibleAgents}
+          tick={data?.tick ?? 0}
+          selectedAgentId={selectedAgentId}
+          onSelectAgent={setSelectedAgentId}
+        />
+        <div className="right-col">
+          <MindViewer
+            agentName={focusedAgent?.name ?? null}
+            agentId={focusedAgent?.id ?? null}
+            mind={focusedAgent?.mind ?? null}
             tick={data?.tick ?? 0}
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={setSelectedAgentId}
           />
           <EventList events={visibleEvents} />
         </div>

@@ -1,0 +1,19 @@
+# default.lambda —— P5 行为 DSL 示例（全局默认行为）
+#
+# 结构：def（命名行为，可组合复用）+ plan（运行时入口）
+# 原语：move dx dy / speak target text / remember key text / ask-llm "prompt"
+#       算术：add / mul / succ / sqr
+# 语法：lambda（λ name. body）/ let / 应用（rator rand…）/ 序列 { ; } / 整数 / 字符串 / 名字
+#
+# 约定：
+#   - plan 直接内联引用自由变量 dx/dy（运行时由 LLM Oracle 决定方向并注入环境），
+#     不要写成 λdx. λdy. 的形式；
+#   - onMeet 是相遇对话的 λ 行为（参数 other 为对方 Agent），有则启用、无则回退内置对话；
+#   - 若某 Agent 名对应 alice.lambda / bob.lambda，该 Agent 用其文件，否则用本文件；
+#   - if/then/else 为保留字但 P5 尚未实现，勿用。
+
+greet   = λ other. (speak other "你好，很高兴遇见你")
+persona = λ other. (remember "met" "遇见了伙伴")
+onMeet  = λ other. { greet other; persona other }
+
+plan = { remember "goal" "向前探索"; move dx dy }

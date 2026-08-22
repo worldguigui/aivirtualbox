@@ -81,6 +81,13 @@ public class SECD {
             Value rator = state.getS().pop();
             effects.addAll(apply(state, rator, rand));
         }
+        // 指令序列：逆序展开压入 C，保持原有顺序执行
+        else if (inst instanceof InstSeq seq) {
+            List<Instruction> instructions = seq.instructions;
+            for (int i = instructions.size() - 1; i >= 0; i--) {
+                state.getC().push(instructions.get(i));
+            }
+        }
         // 未知指令
         else {
             throw new IllegalStateException("Unknown instruction: " + inst);

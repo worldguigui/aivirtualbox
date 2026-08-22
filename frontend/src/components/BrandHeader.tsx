@@ -11,8 +11,9 @@ export function BrandHeader({ tick, agentCount, eventCount }: BrandHeaderProps) 
       <div className="eyebrow">Virtual AI Box · Sandbox Control Center</div>
       <h1>让 Agent 记住世界,也让世界记住事件。</h1>
       <p className="lead">
-        这是一个可演示、可扩展的 AI 沙盒前端:它同步显示世界状态、Agent 记忆、事件流和执行过程,
-        为后续接入经营、社交、任务、战斗等系统保留了统一入口。
+        一个以 SECD 抽象机为行为执行内核、以 LLM 为 Oracle 的多 Agent 沙盒:
+        世界状态、Agent 记忆、事件流与每 Agent 的 S/E/C/D 心智状态同屏可见,
+        为经营、社交、任务、战斗等系统保留了统一入口。
       </p>
 
       <div className="hero-meta">

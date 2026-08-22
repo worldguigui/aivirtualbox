@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Component
@@ -35,8 +36,8 @@ public class WorldEngine {
     public void init() {
         log.info("WorldEngine: Initializing...");
         
-        Agent agent1 = createAgent("Alice", 0, 6);
-        Agent agent2 = createAgent("Bob", 30, 30);
+        Agent agent1 = createAgent("Alice", 6, 2);
+        Agent agent2 = createAgent("Bob", 18, 17);
         
         world.addAgent(agent1);
         world.addAgent(agent2);
@@ -67,7 +68,7 @@ public class WorldEngine {
         // 为Agent创建记忆管理器
         AgentMemory memory = new AgentMemory(agentId, memoryStore);
         
-        Agent agent = new Agent(agentId, name, state, memory, null, true);
+        Agent agent = new Agent(agentId, name, state, memory, new ArrayList<>(), true);
         agent.setMemory(memory);
         
         log.info("WorldEngine: Created agent {} with id {}", name, agentId);

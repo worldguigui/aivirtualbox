@@ -29,7 +29,12 @@ public class Agent implements EventListener {
     @Override
     public void onEvent(com.own.virtualaibox.domain.event.DomainEvent event) {
         if (!active) return;
-        
+
+        // 防御：eventHistory 可能被 @AllArgsConstructor 覆盖为 null（WorldEngine 旧代码传入 null）
+        if (eventHistory == null) {
+            eventHistory = new ArrayList<>();
+        }
+
         // 将事件记录到历史
         eventHistory.add(event.getEventType() + ": " + event.getDescription());
         

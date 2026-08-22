@@ -22,15 +22,23 @@ import com.own.virtualaibox.domain.event.events.TickEndedEvent;
 import com.own.virtualaibox.domain.event.events.TickStartedEvent;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 import com.own.virtualaibox.domain.memory.MemoryEntry;
+import com.own.virtualaibox.mind.AgentRuntime;
+import com.own.virtualaibox.mind.MindController;
+import com.own.virtualaibox.monitor.ConvergenceMonitor;
 
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {
 
     private final WorldEngine worldEngine;
+    private final MindController mindController;
+    private final ConvergenceMonitor convergenceMonitor;
 
-    public DashboardController(WorldEngine worldEngine) {
+    public DashboardController(WorldEngine worldEngine, MindController mindController,
+                               ConvergenceMonitor convergenceMonitor) {
         this.worldEngine = worldEngine;
+        this.mindController = mindController;
+        this.convergenceMonitor = convergenceMonitor;
     }
 
     @GetMapping
@@ -42,6 +50,7 @@ public class DashboardController {
         result.put("agents", buildAgents(memoryLimit));
         result.put("events", buildEvents(eventLimit));
         result.put("metrics", buildMetrics());
+        result.put("convergence", convergenceMonitor.summary());
         result.put("capabilities", List.of(
                 "事件驱动架构",
                 "Agent记忆",
@@ -98,6 +107,10 @@ public class DashboardController {
         map.put("y", agent.getState().getY());
         map.put("active", agent.isActive());
         map.put("eventHistorySize", agent.getEventHistory() == null ? 0 : agent.getEventHistory().size());
+
+        // P4：该 Agent 的 SECD 运行时状态（无运行时则为 null）
+        AgentRuntime runtime = mindController.getRuntime(agent.getId());
+        map.put("mind", runtime == null ? null : runtime.mindSummary());
 
         if (agent.getMemory() != null) {
             AgentMemory memory = agent.getMemory();
