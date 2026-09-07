@@ -693,3 +693,30 @@ load 期 def 求值安全：def 多为 λ 闭包，感知原语只在运行期�
   - `runHandler` 修正：handler 的闭包续体（如 `onMeet = λother. { greet other; persona other }`）解帧后 C 仍非空，
     需继续求值而非停在解帧处；D 栈清空（主计划恢复）即停止 —— 嵌套 λ 行为在 runHandler 内完整跑完。
 - 单测：`src/test/.../behaviordsl/BehaviorCompilerTest.java`（编译/失败场景/运行时 tick 产 MoveEffect/DSL onMeet 跑完 greet+persona）。
+
+### P6（代码完成，待测试）
+- **布尔与真值**（`secd/value/BoolValue.java`）：`#t`/`#f`；真值 Scheme 风格 —— 仅 `#f` 为假，`0`/`""`/AgentRef 皆真（`BoolValue.isTruthy`）。
+- **条件分支**（`secd/InstIfThenElse.java` + `SECD.step`）：`InstIfThenElse(then, else)` 弹出 S 顶一次，按真值压入选中分支到 C；
+  不占新 D 帧、不残留条件值、不改 E —— C 栈同构（§17.5 关键不变量），与 P2 中断/恢复兼容。
+- **比较原语**（`secd/ArithmeticOpEvaluator`）：`eq/lt/gt/le/ge` 走柯里化二元通道；
+  `eq` 支持 Int/String/AgentRef（按 id）/Direction（按 dir）；类型不符或非 Int 比较 → `#f`。
+- **感知层**（`mind/Perception` + `mind/WorldPerception`）：
+  - `Perception` 接口：`self/distTo/nameOf/closestOther/directionOf`，全部只读；Java 层允许 `null`，**不出机器边界**；
+  - `WorldPerception.of(agent, worldState)` 每 tick 由 `AgentRuntime` 注入 `WorldOpEvaluator`（§17.3），
+    同一 tick 内所有 Agent 见同一快照（确定性）；感知范围 `PERCEPTION_RANGE = 5`（曼哈顿距离）；
+  - 感知原语压值进 S（不产 Effect）：`(self)`、`(closest)`（无邻居 → `#f`）、`(dist-to t)`（超范围/未知 → `#f`）、
+    `(name-of t)`、`(direction-of t)`（无 → `#f`，否则 north/east/south/west）。
+- **方向移动**（`mind/WorldOpEvaluator`）：`(move north)` 一元方向移动与 `(move dx dy)` 二元整数移动
+  统一产出 `MoveEffect(deltaX, deltaY)`；方向→delta 映射仅在原语层（§17.4），Effect 层无重载。
+- **文法与编译**（`behaviordsl/`）：
+  - `BehaviorDSL.g4` v0.2：应用参数限定为 `callArg`（原子或括号表达式），括号应用 `(f a b)` 无歧义左结合；
+    `(f)` 零参调用（感知原语用）——P5 的 `expr+` 要求至少 1 参数，无法表达零参调用，改 `callArg*` 支持；
+    `ifExpr` 实现；方向 token `north/east/south/west`；
+    topLevel 分隔符改可省略（`SEMI?`，兼容 `;` 与"一行一个 def"的换行写法）；
+  - `BehaviorCompiler`：`if c then a else b` → `InstSeq([c, InstIfThenElse(a, b)])`；
+    `(f)` 编译为 `InstApp(f, VoidValue)`（unit 哨兵，零参原语被实际调用）；方向原子 → `DirectionValue`；
+    OPS 增加比较 + 感知原语；`(f)` 括号分组单原子原语 → 零参调用。
+- 单测：`SECDTest` 增 14 例（if 真值/分支/0/""/AgentRef 真、if+比较、if 不残留条件值、eq/lt/gt、跨类型 eq→#f、方向 eq）；
+  `BehaviorCompilerTest` 增 7 例（if 编译、if 走 then/else、感知分支 closest、无邻居→else、move north、
+  方向/整数统一 MoveEffect、if-in-handler 与中断兼容）。
+- 文档/示例：`resources/agents/default.lambda` 头部更新 P6 说明 + 感知条件示例（默认 plan 行为不变，示例注释掉）。

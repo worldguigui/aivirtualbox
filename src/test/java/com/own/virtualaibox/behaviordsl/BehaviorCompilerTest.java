@@ -26,14 +26,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * P5 行为 DSL 编译与运行时融合验证。
+ * P5 行为 DSL 编译与运行时融合验证（P6 扩展条件/感知/方向移动）。
  *
- * <p>验证点（docs/secd-fusion-design.md §P5 验收）：</p>
+ * <p>验证点（docs/secd-fusion-design.md §P5/§P6 验收）：</p>
  * <ul>
  *   <li>编译：{@code .lambda} 文本 → {@link BehaviorProgram}（plan / defs / onMeet）；</li>
- *   <li>fail-fast：语法错误、缺 plan、未知名称、def 循环、if 未实现都在加载期报错；</li>
+ *   <li>fail-fast：语法错误、缺 plan、未知名称、def 循环都在加载期报错；</li>
  *   <li>运行时：plan 内联引用 dx/dy（LLM Oracle 注入），tick 产出 MoveEffect；</li>
- *   <li>onMeet：DSL 的 λ 闭包经 interrupt/runHandler 跑完 greet + persona。</li>
+ *   <li>onMeet：DSL 的 λ 闭包经 interrupt/runHandler 跑完 greet + persona；</li>
+ *   <li>P6 条件与感知：if/then/else 编译为 InstIfThenElse（真值 Scheme 风格，仅 #f 为假）；
+ *       感知原语（closest/dist-to/direction-of 等）查询注入的只读快照，无对象 → #f；
+ *       move north 与 move dx dy 统一为 MoveEffect(deltaX, deltaY)。</li>
  * </ul>
  */
 class BehaviorCompilerTest {
@@ -135,13 +138,13 @@ class BehaviorCompilerTest {
     }
 
     @Test
-    void ifIsReservedButNotImplemented() {
+    void ifCompilesIntoInstSeq() {
+        // P6：if/then/else 已实现，编译为 InstSeq([cond, InstIfThenElse(then, else)])
         String src = """
-                plan = λ dx. λ dy. if dx then (move 1 0) else (move 0 1)
+                plan = if (gt 3 2) then (move 1 0) else (move 0 1)
                 """;
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> compiler.compile(src, "if.lambda"));
-        assertTrue(ex.getMessage().contains("if"), ex.getMessage());
+        BehaviorProgram program = compiler.compile(src, "if.lambda");
+        assertNotNull(program.plan(), "if 程序应正常编译");
     }
 
     @Test
@@ -201,5 +204,124 @@ class BehaviorCompilerTest {
                 "onMeet 的 persona 应产出记忆副作用（嵌套闭包续体应在 runHandler 内跑完）");
         assertTrue(runtime.getState().getD().isEmpty(),
                 "对话结束后 D 栈应清空（主计划已恢复）");
+    }
+
+    // ---------------------------------------------------------- P6 条件/感知/方向
+
+    @Test
+    void ifCompilesAndRunsThenBranch() {
+        // (gt 3 2) 为真 → 走 then 分支 (move 1 0)
+        String src = """
+                plan = if (gt 3 2) then (move 1 0) else (move 0 1)
+                """;
+        Agent agent = newAgent("a1", "Alice", 10, 10);
+        AgentRuntime runtime = new AgentRuntime(
+                agent, fakeBrain, compiler.compile(src, "t.lambda"));
+
+        MoveEffect move = (MoveEffect) runtime.tick(worldState(agent, 1)).stream()
+                .filter(e -> e instanceof MoveEffect).findFirst().orElseThrow();
+        assertEquals(1, move.deltaX(), "gt 3 2 为真 → then 分支");
+        assertEquals(0, move.deltaY());
+    }
+
+    @Test
+    void ifPerceptionBranchesOnClosest() {
+        // 范围内有其他 Agent 时 (closest) 为真 → then 分支对最近者说话
+        String src = """
+                plan = if (closest) then (speak (closest) "hi") else (move 1 0)
+                """;
+        Agent alice = newAgent("a1", "Alice", 10, 10);
+        Agent bob = newAgent("b2", "Bob", 10, 11);
+        AgentRuntime runtime = new AgentRuntime(
+                alice, fakeBrain, compiler.compile(src, "t.lambda"));
+        WorldState ws = new WorldState(1, Map.of(
+                alice.getId(), alice.getState(), bob.getId(), bob.getState()));
+
+        List<Effect> effects = runtime.tick(ws);
+
+        assertTrue(effects.stream().anyMatch(e -> e instanceof SpeakEffect),
+                "Bob 距离 1 ≤ 感知范围 5，(closest) 为真 → 说话而非移动");
+    }
+
+    @Test
+    void closestReturnsFalseWhenAlone() {
+        // 感知范围内无其他 Agent → (closest) 为 #f → else 分支移动
+        String src = """
+                plan = if (closest) then (speak (closest) "hi") else (move 1 0)
+                """;
+        Agent alice = newAgent("a1", "Alice", 10, 10);
+        AgentRuntime runtime = new AgentRuntime(
+                alice, fakeBrain, compiler.compile(src, "t.lambda"));
+
+        MoveEffect move = (MoveEffect) runtime.tick(worldState(alice, 1)).stream()
+                .filter(e -> e instanceof MoveEffect).findFirst().orElseThrow();
+        assertEquals(1, move.deltaX(), "无邻居 → (closest)=#f → else 分支 (move 1 0)");
+        assertEquals(0, move.deltaY());
+    }
+
+    @Test
+    void moveByDirection() {
+        String src = """
+                plan = { move north }
+                """;
+        Agent agent = newAgent("a1", "Alice", 10, 10);
+        AgentRuntime runtime = new AgentRuntime(
+                agent, fakeBrain, compiler.compile(src, "t.lambda"));
+
+        MoveEffect move = (MoveEffect) runtime.tick(worldState(agent, 1)).stream()
+                .filter(e -> e instanceof MoveEffect).findFirst().orElseThrow();
+        assertEquals(0, move.deltaX());
+        assertEquals(-1, move.deltaY(), "north → dy = -1");
+    }
+
+    @Test
+    void moveUnifiedEffectContract() {
+        // 方向移动与整数移动统一为 MoveEffect(deltaX, deltaY)（docs §17.4，Effect 层无重载）
+        Agent a1 = newAgent("a1", "Alice", 10, 10);
+        Agent a2 = newAgent("a2", "Ace", 10, 10);
+        AgentRuntime rDir = new AgentRuntime(
+                a1, fakeBrain, compiler.compile("plan = { move north }", "d.lambda"));
+        AgentRuntime rInt = new AgentRuntime(
+                a2, fakeBrain, compiler.compile("plan = { move 0 -1 }", "i.lambda"));
+
+        MoveEffect mDir = (MoveEffect) rDir.tick(worldState(a1, 1)).stream()
+                .filter(e -> e instanceof MoveEffect).findFirst().orElseThrow();
+        MoveEffect mInt = (MoveEffect) rInt.tick(worldState(a2, 1)).stream()
+                .filter(e -> e instanceof MoveEffect).findFirst().orElseThrow();
+
+        assertEquals(0, mDir.deltaX());
+        assertEquals(-1, mDir.deltaY());
+        assertEquals(mInt.deltaX(), mDir.deltaX(), "方向移动与整数移动产出同一 MoveEffect");
+        assertEquals(mInt.deltaY(), mDir.deltaY());
+    }
+
+    @Test
+    void ifInsideHandlerAndInterrupt() {
+        // if 出现在 handler 闭包内：C 栈同构，与 P2 中断/恢复兼容（docs §17.5）
+        String src = """
+                greet  = λ other. (speak other "你好")
+                persona = λ other. (remember "met" "遇见")
+                onMeet = λ other. { if (gt 1 0) then (greet other) else (move 0 0); persona other }
+                plan   = { move dx dy }
+                """;
+        BehaviorProgram program = compiler.compile(src, "t.lambda");
+        Agent agent = newAgent("a1", "Alice", 10, 10);
+        Agent other = newAgent("b2", "Bob", 10, 11);
+        AgentRuntime runtime = new AgentRuntime(agent, fakeBrain, program);
+
+        Value onMeet = program.onMeet();
+        assertNotNull(onMeet);
+        runtime.interrupt(new InstApp(
+                new InstConst(onMeet),
+                new InstConst(new AgentRefValue(other.getId(), other.getName()))));
+
+        List<Effect> effects = runtime.runHandler(200);
+
+        assertTrue(effects.stream().anyMatch(e -> e instanceof SpeakEffect),
+                "if 真 → greet 说话");
+        assertTrue(effects.stream().anyMatch(e -> e instanceof RememberEffect),
+                "if 之后 persona 继续执行（不产生错误的嵌套状态）");
+        assertTrue(runtime.getState().getD().isEmpty(),
+                "handler 结束后 D 栈清空（主计划恢复）");
     }
 }

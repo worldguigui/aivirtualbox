@@ -1,6 +1,7 @@
 package com.own.virtualaibox.secd;
 
 import com.own.virtualaibox.effect.Effect;
+import com.own.virtualaibox.secd.value.BoolValue;
 import com.own.virtualaibox.secd.value.ClosureValue;
 import com.own.virtualaibox.secd.value.InfiniteValue;
 import com.own.virtualaibox.secd.value.Value;
@@ -87,6 +88,11 @@ public class SECD {
             for (int i = instructions.size() - 1; i >= 0; i--) {
                 state.getC().push(instructions.get(i));
             }
+        }
+        // 条件分支（P6）：弹出 S 顶作为条件，真则压入 then，假则压入 otherwise（C 栈同构，无新 D 帧）
+        else if (inst instanceof InstIfThenElse ite) {
+            Value cond = state.getS().pop();
+            state.getC().push(BoolValue.isTruthy(cond) ? ite.then : ite.otherwise);
         }
         // 未知指令
         else {

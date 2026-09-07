@@ -33,7 +33,7 @@ import java.util.List;
 public class DefaultPlanCompiler {
 
     /** 默认路径长度（tick 数），每 tick 走一格。 */
-    private static final int PATH_LENGTH = 1;
+    private static final int PATH_LENGTH = 3;
 
     private final LLMBrain llmBrain;
 

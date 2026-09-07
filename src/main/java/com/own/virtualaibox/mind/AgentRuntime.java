@@ -42,8 +42,11 @@ public class AgentRuntime {
     private static final int MAX_STEPS_PER_TICK = 500;
 
     private final Agent agent;
+    /** LLM 预言机：DSL plan 的 dx/dy 由它决定（compileFromProgram 注入 E）。 */
+    private final LLMBrain llmBrain;
     private final MachineState state;
     private final SECD secd;
+    private final WorldOpEvaluator evaluator;
     private final DefaultPlanCompiler planCompiler;
     /** P5 行为程序（来自 .lambda 配置）；为 null 时回退到内置 DefaultPlanCompiler。 */
     private final BehaviorProgram behaviorProgram;
@@ -59,8 +62,10 @@ public class AgentRuntime {
 
     public AgentRuntime(Agent agent, LLMBrain llmBrain, BehaviorProgram behaviorProgram) {
         this.agent = agent;
+        this.llmBrain = llmBrain;
         this.state = new MachineState();
-        this.secd = new SECD(new WorldOpEvaluator(agent, llmBrain));
+        this.evaluator = new WorldOpEvaluator(agent, llmBrain);
+        this.secd = new SECD(evaluator);
         this.planCompiler = new DefaultPlanCompiler(llmBrain);
         this.behaviorProgram = behaviorProgram;
     }
@@ -74,6 +79,8 @@ public class AgentRuntime {
      */
     public List<Effect> tick(WorldState worldState) {
         List<Effect> effects = new ArrayList<>();
+        // P6：注入本 tick 的世界只读快照（供感知原语查询；同一 tick 内确定性一致）
+        evaluator.setPerception(WorldPerception.of(agent, worldState));
         if (state.isTerminated()) {
             if (behaviorProgram == null) {
                 planCompiler.compileInto(state, agent, worldState);

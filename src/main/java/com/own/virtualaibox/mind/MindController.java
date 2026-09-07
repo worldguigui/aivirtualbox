@@ -11,6 +11,7 @@ import com.own.virtualaibox.effect.Effect;
 import com.own.virtualaibox.secd.InstApp;
 import com.own.virtualaibox.secd.InstConst;
 import com.own.virtualaibox.secd.value.AgentRefValue;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -37,6 +38,11 @@ public class MindController {
     private final BehaviorRegistry behaviorRegistry;
     private final Map<String, AgentRuntime> runtimes = new ConcurrentHashMap<>();
 
+    public MindController(LLMBrain llmBrain) {
+        this(llmBrain, new BehaviorRegistry());
+    }
+
+    @Autowired
     public MindController(LLMBrain llmBrain, BehaviorRegistry behaviorRegistry) {
         this.llmBrain = llmBrain;
         this.behaviorRegistry = behaviorRegistry;

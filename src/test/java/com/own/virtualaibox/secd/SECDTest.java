@@ -1,14 +1,21 @@
 package com.own.virtualaibox.secd;
 
+import com.own.virtualaibox.secd.value.AgentRefValue;
+import com.own.virtualaibox.secd.value.BoolValue;
 import com.own.virtualaibox.secd.value.ClosureValue;
+import com.own.virtualaibox.secd.value.DirectionValue;
 import com.own.virtualaibox.secd.value.InfiniteValue;
 import com.own.virtualaibox.secd.value.IntValue;
 import com.own.virtualaibox.secd.value.OpValue;
+import com.own.virtualaibox.secd.value.StringValue;
 import com.own.virtualaibox.secd.value.Value;
 import com.own.virtualaibox.secd.value.VarValue;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -177,5 +184,107 @@ class SECDTest {
         MachineState state = new MachineState();
         new SECD().run(state, app(app(op("add"), c(10)), c(20)));
         assertTrue(state.isTerminated(), "运行结束后 C/D 栈应为空");
+    }
+
+    // ---------------------------------------------------------- P6 条件/比较
+
+    private static Instruction ifThenElse(Instruction cond, Instruction then, Instruction otherwise) {
+        return new InstSeq(List.of(cond, new InstIfThenElse(then, otherwise)));
+    }
+
+    private static boolean boolResult(Reduction r) {
+        assertInstanceOf(BoolValue.class, r.result(), "expected BoolValue but got: " + r.result());
+        return ((BoolValue) r.result()).val;
+    }
+
+    @Test
+    void ifTrueBranch() {
+        // if #t then 10 else 20 -> 10
+        Reduction r = eval(ifThenElse(new InstConst(new BoolValue(true)), c(10), c(20)));
+        assertEquals(10, intResult(r));
+    }
+
+    @Test
+    void ifFalseBranch() {
+        // if #f then 10 else 20 -> 20
+        Reduction r = eval(ifThenElse(new InstConst(new BoolValue(false)), c(10), c(20)));
+        assertEquals(20, intResult(r));
+    }
+
+    @Test
+    void ifZeroIsTruthy() {
+        // Scheme 真值：0 为真 → if 0 then 1 else 2 -> 1
+        assertEquals(1, intResult(eval(ifThenElse(c(0), c(1), c(2)))));
+    }
+
+    @Test
+    void ifEmptyStringIsTruthy() {
+        // "" 为真
+        Reduction r = eval(ifThenElse(new InstConst(new StringValue("")), c(1), c(2)));
+        assertEquals(1, intResult(r));
+    }
+
+    @Test
+    void ifAgentRefIsTruthy() {
+        // AgentRef（任意存在的引用）为真
+        Reduction r = eval(ifThenElse(
+                new InstConst(new AgentRefValue("a1", "Alice")), c(1), c(2)));
+        assertEquals(1, intResult(r));
+    }
+
+    @Test
+    void ifWithCompareCondition() {
+        // if (gt 3 2) then 1 else 2 -> 1
+        Reduction r = eval(ifThenElse(app(app(op("gt"), c(3)), c(2)), c(1), c(2)));
+        assertEquals(1, intResult(r));
+    }
+
+    @Test
+    void ifConsumesCondNoStrayValue() {
+        // if 只弹一次 S 顶，条件值不残留；if 嵌在序列中，结果应恰好是分支值
+        Reduction r = eval(new InstSeq(List.of(
+                app(app(op("add"), c(1)), c(1)),
+                ifThenElse(c(0), c(3), c(4)))));
+        assertEquals(3, intResult(r), "条件值被 InstIfThenElse 消耗，S 顶应是 then 分支值 3");
+    }
+
+    @Test
+    void compareEq() {
+        assertTrue(boolResult(eval(app(app(op("eq"), c(3)), c(3)))));
+        assertFalse(boolResult(eval(app(app(op("eq"), c(3)), c(4)))));
+    }
+
+    @Test
+    void compareLtGt() {
+        assertTrue(boolResult(eval(app(app(op("lt"), c(1)), c(2)))));
+        assertFalse(boolResult(eval(app(app(op("lt"), c(2)), c(1)))));
+        assertTrue(boolResult(eval(app(app(op("gt"), c(3)), c(2)))));
+    }
+
+    @Test
+    void compareStringEq() {
+        assertTrue(boolResult(eval(app(app(op("eq"),
+                new InstConst(new StringValue("hi"))),
+                new InstConst(new StringValue("hi"))))));
+        assertFalse(boolResult(eval(app(app(op("eq"),
+                new InstConst(new StringValue("hi"))),
+                new InstConst(new StringValue("yo"))))));
+    }
+
+    @Test
+    void compareCrossTypeEqIsFalse() {
+        // 跨类型 eq（(eq 1 "1")）→ #f
+        assertFalse(boolResult(eval(app(app(op("eq"),
+                c(1)), new InstConst(new StringValue("1"))))));
+    }
+
+    @Test
+    void compareDirectionEq() {
+        assertTrue(boolResult(eval(app(app(op("eq"),
+                new InstConst(new DirectionValue("north"))),
+                new InstConst(new DirectionValue("north"))))));
+        assertFalse(boolResult(eval(app(app(op("eq"),
+                new InstConst(new DirectionValue("north"))),
+                new InstConst(new DirectionValue("east"))))));
     }
 }

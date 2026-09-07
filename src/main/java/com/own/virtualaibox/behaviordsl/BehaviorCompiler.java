@@ -2,6 +2,7 @@ package com.own.virtualaibox.behaviordsl;
 
 import com.own.virtualaibox.secd.InstApp;
 import com.own.virtualaibox.secd.InstConst;
+import com.own.virtualaibox.secd.InstIfThenElse;
 import com.own.virtualaibox.secd.InstLam;
 import com.own.virtualaibox.secd.InstSeq;
 import com.own.virtualaibox.secd.InstVar;
@@ -9,10 +10,12 @@ import com.own.virtualaibox.secd.Instruction;
 import com.own.virtualaibox.secd.MachineState;
 import com.own.virtualaibox.secd.Reduction;
 import com.own.virtualaibox.secd.SECD;
+import com.own.virtualaibox.secd.value.DirectionValue;
 import com.own.virtualaibox.secd.value.IntValue;
 import com.own.virtualaibox.secd.value.OpValue;
 import com.own.virtualaibox.secd.value.StringValue;
 import com.own.virtualaibox.secd.value.Value;
+import com.own.virtualaibox.secd.value.VoidValue;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -36,21 +39,25 @@ import java.util.Set;
  *
  * <p>语义要点：</p>
  * <ul>
- *   <li>原语（move/speak/remember/ask-llm/add/mul/succ/sqr）编译为
+ *   <li>原语（move/speak/remember/ask-llm/add/mul/succ/sqr/比较/感知）编译为
  *       {@code InstConst(OpValue)}，柯里化应用；应用 {@code (f a b)} 左结合展开为
- *       {@code ((f a) b)}；</li>
+ *       {@code ((f a) b)}；零参调用 {@code (f)} 应用一次到 unit（VoidValue）；</li>
  *   <li>{@code let x = e in b} 编译为 {@code apply(λx.b, e)}（β 归约），不占新 D 帧；</li>
- *   <li>{@code if/then/else} 是保留字但 P5 尚未实现布尔机制，写入即抛明确错误；</li>
+ *   <li>{@code if/then/else}（P6）编译为 {@code [cond, InstIfThenElse(then, else)]}，
+ *       条件只弹 S 顶一次并把选中分支压入 C，不占新 D 帧（docs §17.5）；真值遵循
+ *       Scheme 风格——仅 {@code #f} 为假，其余（0、""、AgentRef 等）皆真；</li>
  *   <li>def 的顶层引用在编译期以自由变量形式记录，编译期按依赖序把 def 求值为闭包值
  *       （{@link SECD} 运行编译指令），运行时作为 E 基底；循环/未知引用在加载期报错。</li>
  * </ul>
  */
 public class BehaviorCompiler {
 
-    /** 运行时原语集合（对应 WorldOpEvaluator / ArithmeticOpEvaluator）。 */
+    /** 运行时原语集合（对应 WorldOpEvaluator / ArithmeticOpEvaluator，含 P6 感知/比较）。 */
     private static final Set<String> OPS = Set.of(
             "move", "speak", "remember", "ask-llm",
-            "add", "mul", "succ", "sqr");
+            "add", "mul", "succ", "sqr",
+            "eq", "lt", "gt", "le", "ge",
+            "self", "closest", "dist-to", "name-of", "direction-of");
 
     /** plan 中允许的自由变量（运行时由 LLM Oracle 注入 E）。 */
     private static final Set<String> RUNTIME_VARS = Set.of("dx", "dy");
@@ -171,32 +178,50 @@ public class BehaviorCompiler {
                     new InstApp(new InstLam(name, body.code()), bound.code()), free);
         }
         if (ctx.ifExpr() != null) {
-            // 保留字但未实现：明确报错，而不是生成语义错误的程序
-            throw new IllegalArgumentException(
-                    "if/then/else 暂未实现（P5 DSL 只支持 lambda/let/应用/序列/常量/原语）");
+            // P6 条件分支（docs §17.5）：cond 求值后 InstIfThenElse 弹 S 顶，
+            // 按真值把选中分支压入 C；不占新 D 帧，与中断/恢复兼容。
+            BehaviorDSLParser.IfExprContext ie = ctx.ifExpr();
+            CompiledExpr cond = compileExpr(ie.expr(0), scope);
+            CompiledExpr then = compileExpr(ie.expr(1), scope);
+            CompiledExpr otherwise = compileExpr(ie.expr(2), scope);
+            Set<String> free = new HashSet<>(cond.freeTopNames());
+            free.addAll(then.freeTopNames());
+            free.addAll(otherwise.freeTopNames());
+            return new CompiledExpr(
+                    new InstSeq(List.of(cond.code(),
+                            new InstIfThenElse(then.code(), otherwise.code()))), free);
         }
         if (ctx.application() != null) {
             BehaviorDSLParser.ApplicationContext app = ctx.application();
-            List<BehaviorDSLParser.ExprContext> exprs = app.expr();
-            // 头可以是裸名字（并列形式 f a b）或括号内第一个 expr（(f a b)）；
-            // 均左结合柯里化展开为 ((f a) b)
-            int start;
+            // 文法限定参数为 callArg（原子或括号表达式），杜绝 (f a b) 被误解析为 (f (a b))。
+            // 头：并列形式 f a b 是裸名字（callArg 全为实参）；括号形式 (f a b) 是 callArg[0]。
+            List<BehaviorDSLParser.CallArgContext> args = app.callArg();
             CompiledExpr head;
+            int start;
             if (app.NAME() != null) {
                 head = compileName(app.NAME().getText(), scope);
                 start = 0;
             } else {
-                head = compileExpr(exprs.get(0), scope);
+                head = compileCallArg(args.get(0), scope);
                 start = 1;
             }
             Instruction code = head.code();
             Set<String> free = new HashSet<>(head.freeTopNames());
-            for (int i = start; i < exprs.size(); i++) {
-                CompiledExpr arg = compileExpr(exprs.get(i), scope);
+            for (int i = start; i < args.size(); i++) {
+                CompiledExpr arg = compileCallArg(args.get(i), scope);
                 code = new InstApp(code, arg.code());
                 free.addAll(arg.freeTopNames());
             }
+            // 零参调用 (f)：callArg 仅头本身 → 应用一次到 unit（VoidValue），
+            // 使一元感知原语（self/closest）被实际调用而不是只压入操作符值。
+            if (app.NAME() == null && args.size() == 1) {
+                code = new InstApp(code, new InstConst(new VoidValue()));
+            }
             return new CompiledExpr(code, free);
+        }
+        if (ctx.LPAREN() != null) {
+            // 括号分组 (expr)：用于包裹 if/let/lambda 等非 callArg 表达式
+            return compileGrouped(ctx.expr(), scope);
         }
         if (ctx.seq() != null) {
             List<Instruction> list = new ArrayList<>();
@@ -220,7 +245,30 @@ public class BehaviorCompiler {
             return new CompiledExpr(
                     new InstConst(new StringValue(unescape(atom.STRING().getText()))), Set.of());
         }
+        if (atom.direction() != null) {
+            return new CompiledExpr(
+                    new InstConst(new DirectionValue(atom.direction().getText())), Set.of());
+        }
         return compileName(atom.NAME().getText(), scope);
+    }
+
+    /** 应用实参：原子 → compileAtom；括号表达式 → compileGrouped。 */
+    private CompiledExpr compileCallArg(BehaviorDSLParser.CallArgContext c, Set<String> scope) {
+        if (c.atom() != null) {
+            return compileAtom(c.atom(), scope);
+        }
+        return compileGrouped(c.expr(), scope);
+    }
+
+    /** 括号分组 (expr)：inner 为单个原子原语 → 零参调用；否则原样编译。 */
+    private CompiledExpr compileGrouped(BehaviorDSLParser.ExprContext inner, Set<String> scope) {
+        if (inner.atom() != null && inner.atom().NAME() != null
+                && OPS.contains(inner.atom().NAME().getText())) {
+            CompiledExpr head = compileAtom(inner.atom(), scope);
+            return new CompiledExpr(
+                    new InstApp(head.code(), new InstConst(new VoidValue())), head.freeTopNames());
+        }
+        return compileExpr(inner, scope);
     }
 
     /** 裸名字的编译：局部变量 → InstVar；原语 → 常量操作符；否则顶层自由变量。 */

@@ -1,5 +1,6 @@
 package com.own.virtualaibox.mind;
 
+import com.own.virtualaibox.behaviordsl.BehaviorProgram;
 import com.own.virtualaibox.brain.LLMBrain;
 import com.own.virtualaibox.domain.action.MoveAction;
 import com.own.virtualaibox.domain.agent.Agent;
@@ -10,11 +11,18 @@ import com.own.virtualaibox.effect.LLMRequestEffect;
 import com.own.virtualaibox.effect.MoveEffect;
 import com.own.virtualaibox.effect.RememberEffect;
 import com.own.virtualaibox.effect.SpeakEffect;
+import com.own.virtualaibox.secd.InstApp;
+import com.own.virtualaibox.secd.InstConst;
+import com.own.virtualaibox.secd.InstSeq;
+import com.own.virtualaibox.secd.Instruction;
 import com.own.virtualaibox.secd.MachineState;
+import com.own.virtualaibox.secd.value.IntValue;
+import com.own.virtualaibox.secd.value.OpValue;
 import com.own.virtualaibox.secd.value.StringValue;
 import com.own.virtualaibox.secd.value.Value;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +69,39 @@ class AgentRuntimeTest {
 
     private final FakeBrain fakeBrain = new FakeBrain();
 
-    private AgentRuntime newRuntime(Agent agent) {
-        return new AgentRuntime(agent, fakeBrain);
+    private AgentRuntime newRuntime(Agent agent, BehaviorProgram program) {
+        return new AgentRuntime(agent, fakeBrain, program);
+    }
+
+    /**
+     * 显式构造"1 记忆写入 + steps 步移动"的多步行为程序。
+     *
+     * <p>与 {@code DefaultPlanCompiler.PATH_LENGTH} 常量解耦：PATH_LENGTH 已是 1（默认计划单步耗尽），
+     * 而"计划跨 tick 驻留 / 耗尽重编译 / D 栈中断恢复"这些行为需要多步计划才能验证。</p>
+     */
+    private static BehaviorProgram multiStepPlan(int steps) {
+        List<Instruction> instrs = new ArrayList<>();
+        instrs.add(app(appOp("remember", constStr("goal")), constStr("head-1,0")));
+        for (int i = 0; i < steps; i++) {
+            instrs.add(app(appOp("move", constInt(1)), constInt(0)));
+        }
+        return new BehaviorProgram(new InstSeq(instrs), Map.of(), null);
+    }
+
+    private static InstApp app(Instruction rator, Instruction rand) {
+        return new InstApp(rator, rand);
+    }
+
+    private static InstApp appOp(String op, Instruction rand) {
+        return app(new InstConst(new OpValue(op)), rand);
+    }
+
+    private static InstConst constInt(int v) {
+        return new InstConst(new IntValue(v));
+    }
+
+    private static InstConst constStr(String s) {
+        return new InstConst(new StringValue(s));
     }
 
     private Agent newAgent(String id, String name, int x, int y) {
@@ -80,11 +119,12 @@ class AgentRuntimeTest {
     @Test
     void firstTickProducesRememberThenMove() {
         Agent agent = newAgent("a1", "Alice", 10, 10);
-        AgentRuntime runtime = newRuntime(agent);
+        // 显式注入 3 步计划（不依赖 PATH_LENGTH；PATH_LENGTH=1 时默认计划仅 1 步、首 tick 即耗尽）
+        AgentRuntime runtime = newRuntime(agent, multiStepPlan(3));
 
         List<Effect> effects = runtime.tick(worldState(agent, 1));
 
-        // 计划开头是记忆写入，随后是一步移动（P1 默认行为程序）
+        // 计划开头是记忆写入，随后是一步移动
         assertTrue(effects.stream().anyMatch(e -> e instanceof RememberEffect),
                 "计划开头应产出记忆副作用");
         MoveEffect move = (MoveEffect) effects.stream()
@@ -92,16 +132,17 @@ class AgentRuntimeTest {
         assertEquals(1, move.deltaX());
         assertEquals(0, move.deltaY());
 
-        // 一步动作后计划未耗尽：C 栈仍驻留剩余路径
+        // 一步动作后计划未耗尽：C 栈仍驻留剩余路径（3 步计划走 1 步剩 2 步）
         assertFalse(runtime.isIdle(), "首 tick 后应还有剩余计划步");
     }
 
     @Test
     void planPersistsAcrossTicksAndReloads() {
         Agent agent = newAgent("a1", "Alice", 10, 10);
-        AgentRuntime runtime = newRuntime(agent);
+        // 显式 3 步计划：验证计划跨 tick 驻留 + 耗尽后自动重编译（与 PATH_LENGTH 常量解耦）
+        AgentRuntime runtime = newRuntime(agent, multiStepPlan(3));
 
-        // tick1~3：每 tick 恰好一个移动动作（PATH_LENGTH=3）
+        // tick1~3：每 tick 恰好一个移动动作，3 步走完计划耗尽
         for (int t = 1; t <= 3; t++) {
             List<Effect> effects = runtime.tick(worldState(agent, t));
             long moves = effects.stream().filter(e -> e instanceof MoveEffect).count();
@@ -121,7 +162,8 @@ class AgentRuntimeTest {
     void interruptResumesMainPlanViaDStack() {
         Agent agent = newAgent("a1", "Alice", 10, 10);
         Agent other = newAgent("b2", "Bob", 10, 11);
-        AgentRuntime runtime = newRuntime(agent);
+        // 显式 3 步计划：走 1 步后 C 栈仍驻留 2 步，供中断挂起（与 PATH_LENGTH 常量解耦）
+        AgentRuntime runtime = newRuntime(agent, multiStepPlan(3));
 
         // 主计划走一步（remember + move1），C 栈仍驻留剩余路径
         runtime.tick(worldState(agent, 1));
