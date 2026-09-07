@@ -14,5 +14,5 @@ export interface StepResult {
 }
 
 export function stepTick() {
-  return request<StepResult>('/step')
+  return request<StepResult>('/api/dashboard/step')
 }

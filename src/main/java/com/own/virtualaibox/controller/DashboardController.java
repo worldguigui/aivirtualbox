@@ -61,6 +61,17 @@ public class DashboardController {
         return result;
     }
 
+    @GetMapping("/step")
+    public Map<String, Object> step() {
+        worldEngine.step();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("tick", worldEngine.getCurrentTick());
+        result.put("agents", worldEngine.getWorld().getAgents().stream().map(this::agentToMap).toList());
+
+        return result;
+    }
+
     @GetMapping("/state")
     public Map<String, Object> state() {
         Map<String, Object> result = new HashMap<>();
@@ -97,6 +108,15 @@ public class DashboardController {
         return worldEngine.getWorld().getAgents().stream()
                 .map(agent -> agentToMap(agent, memoryLimit))
                 .toList();
+    }
+
+    private Map<String, Object> agentToMap(Agent agent) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", agent.getId());
+        map.put("name", agent.getName());
+        map.put("x", agent.getState().getX());
+        map.put("y", agent.getState().getY());
+        return map;
     }
 
     private Map<String, Object> agentToMap(Agent agent, int memoryLimit) {
