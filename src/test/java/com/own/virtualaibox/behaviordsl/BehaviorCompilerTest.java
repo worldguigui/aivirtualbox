@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * P5 行为 DSL 编译与运行时融合验证（P6 扩展条件/感知/方向移动）。
  *
- * <p>验证点（docs/secd-fusion-design.md §P5/§P6 验收）：</p>
+ * <p>验证点（docs/secd-fusion-design-frozen.md §P5/§P6 验收）：</p>
  * <ul>
  *   <li>编译：{@code .lambda} 文本 → {@link BehaviorProgram}（plan / defs / onMeet）；</li>
  *   <li>fail-fast：语法错误、缺 plan、未知名称、def 循环都在加载期报错；</li>

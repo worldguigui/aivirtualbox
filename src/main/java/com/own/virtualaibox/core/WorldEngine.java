@@ -36,7 +36,7 @@ public class WorldEngine {
     public void init() {
         log.info("WorldEngine: Initializing...");
         
-        Agent agent1 = createAgent("Alice", 6, 2);
+        /*Agent agent1 = createAgent("Alice", 6, 2);
         Agent agent2 = createAgent("Bob", 18, 17);
         
         world.addAgent(agent1);
@@ -47,7 +47,7 @@ public class WorldEngine {
         eventBus.subscribeGlobal(agent2);
         
         log.info("WorldEngine: Initialized with {} agents", world.getAgents().size());
-        log.info("WorldEngine: Event listeners registered: {}", eventBus.getSubscriberCount());
+        log.info("WorldEngine: Event listeners registered: {}", eventBus.getSubscriberCount());*/
     }
 
     public void step() {
@@ -59,6 +59,12 @@ public class WorldEngine {
         tickSchedule.processTick(currentTick, world);
         
         log.info("WorldEngine: Tick {} completed", currentTick);
+    }
+
+    public void addAgent(Agent agent) {
+
+
+        world.addAgent(agent);
     }
 
     private Agent createAgent(String name, int x, int y) {
@@ -75,6 +81,7 @@ public class WorldEngine {
         
         return agent;
     }
+
 
     public int getCurrentTick() {
         return virtualClock.getTick();

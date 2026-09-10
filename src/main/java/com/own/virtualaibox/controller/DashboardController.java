@@ -7,10 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.own.virtualaibox.core.WorldEngine;
 import com.own.virtualaibox.domain.agent.Agent;
@@ -60,6 +57,12 @@ public class DashboardController {
         ));
         return result;
     }
+
+    @PostMapping("/addAgent")
+    public Map<String, Object> addAgent() {
+        Map<String, Object> result = new HashMap<>();
+    }
+
 
     @GetMapping("/step")
     public Map<String, Object> step() {

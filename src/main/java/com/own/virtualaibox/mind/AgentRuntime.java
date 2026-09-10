@@ -24,7 +24,7 @@ import java.util.Stack;
 /**
  * Agent 心智运行时：每个 Agent 持有一台 SECD 抽象机。
  *
- * <p>职责（docs/secd-fusion-design.md §6）：</p>
+ * <p>职责（docs/secd-fusion-design-frozen.md §6）：</p>
  * <ul>
  *   <li>持有 MachineState（S/E/C/D）与 SECD 驱动；</li>
  *   <li>每 tick 调用 {@link #tick} 推进机器（单步预算内）；</li>
@@ -211,7 +211,7 @@ public class AgentRuntime {
     /**
      * 捕获当前 SECD 四寄存器状态摘要（P4 可视化）。
      *
-     * <p>供 dashboard 暴露"每 Agent 的行为执行状态"（docs/secd-fusion-design.md §14 P4）：
+     * <p>供 dashboard 暴露"每 Agent 的行为执行状态"（docs/secd-fusion-design-frozen.md §14 P4）：
      * 状态机状态（idle / executing / suspended）+ S/E/C/D 规模与栈顶预览。
      * 预览取栈顶数条，避免传输整个栈。</p>
      */

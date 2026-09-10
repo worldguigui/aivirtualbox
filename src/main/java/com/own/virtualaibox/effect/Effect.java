@@ -3,7 +3,7 @@ package com.own.virtualaibox.effect;
 /**
  * 副作用描述（意图），SECD 计算与 World 副作用之间的隔离边界。
  *
- * <p>设计定位（见 docs/secd-fusion-design.md §7）：</p>
+ * <p>设计定位（见 docs/secd-fusion-design-frozen.md §7）：</p>
  * <pre>
  *   SECD = 计算           → 产生 Effect（意图）
  *   EffectExecutor = 真正执行副作用 → 修改 World

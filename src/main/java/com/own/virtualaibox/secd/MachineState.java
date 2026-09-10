@@ -9,7 +9,7 @@ import java.util.Stack;
 /**
  * SECD 机器的四寄存器状态 {@code { S, E, C, D }}。
  *
- * <p>语义（docs/secd-fusion-design.md §4）：</p>
+ * <p>语义（docs/secd-fusion-design-frozen.md §4）：</p>
  * <ul>
  *   <li><b>S</b> 值栈 —— 当前计算过程中的值</li>
  *   <li><b>E</b> 词法环境 / 闭包环境 —— 变量名到值的绑定</li>

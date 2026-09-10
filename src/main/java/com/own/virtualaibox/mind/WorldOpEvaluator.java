@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 世界原语求值器（P1）：在纯算术之上注入世界副作用原语。
  *
- * <p>原语语义（对应 docs/secd-fusion-design.md §9 DSL 草案，这里以 λ 操作符实现）：</p>
+ * <p>原语语义（对应 docs/secd-fusion-design-frozen.md §9 DSL 草案，这里以 λ 操作符实现）：</p>
  * <ul>
  *   <li>{@code move dx dy} —— 二元，产生 {@link MoveEffect}</li>
  *   <li>{@code speak target content} —— 二元，产生 {@link SpeakEffect}</li>

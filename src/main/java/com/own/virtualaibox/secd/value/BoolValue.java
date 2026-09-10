@@ -3,7 +3,7 @@ package com.own.virtualaibox.secd.value;
 /**
  * 布尔值（P6）。toString 为 LISP/Scheme 风格的 {@code #t} / {@code #f}。
  *
- * <p>真值规则（docs/secd-fusion-design.md §17.2）：仅 {@code #f} 为假，其余一切值
+ * <p>真值规则（docs/secd-fusion-design-frozen.md §17.2）：仅 {@code #f} 为假，其余一切值
  * （含 {@code 0}、{@code ""}、AgentRef）为真。这使 {@code if} 与"无对象 → #f"的
  * 感知原语（如 {@code (closest)}）可直接组合。</p>
  */

@@ -2,7 +2,8 @@
 
 > 版本：v0.3（评审修订稿 + P6 设计）
 > 依据：`docs/my_opinion.md` 审查意见逐条落实
-> 状态：待定稿
+> 状态：已冻结，只做历史回顾，不进行任何更新。
+> 最新设计见 docs/architecture.md + docs/spec/*
 
 ---
 

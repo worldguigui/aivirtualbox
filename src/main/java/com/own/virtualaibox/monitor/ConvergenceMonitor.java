@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * 收敛 / 活锁检测器（P3）。
  *
- * <p>对应设计（docs/secd-fusion-design.md §9）：把"归一化"落地为工程检测：</p>
+ * <p>对应设计（docs/secd-fusion-design-frozen.md §9）：把"归一化"落地为工程检测：</p>
  * <ul>
  *   <li><b>Fixed Point / Stability</b> —— 整个世界长期无变化 → {@link WorldConvergedEvent}；</li>
  *   <li><b>AgentStuck</b> —— 单个 Agent 原地不动（含被世界边界钳制）→ {@link AgentStuckEvent}；</li>
