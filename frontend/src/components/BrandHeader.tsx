@@ -1,10 +1,11 @@
+/** 品牌头部及运行指标的输入属性。 */
 interface BrandHeaderProps {
   tick: number
   agentCount: number
   eventCount: number
 }
 
-/** Hero 品牌区:标题 + 三个核心指标 */
+/** 渲染品牌标题和三个核心运行指标。 */
 export function BrandHeader({ tick, agentCount, eventCount }: BrandHeaderProps) {
   return (
     <div className="brand">

@@ -7,7 +7,9 @@ import java.util.List;
 
 import static java.lang.Thread.sleep;
 
+/** 验证网格邻近查询的基础测试。 */
 public class JunitTest {
+    /** 执行网格邻近查询并输出查询结果。 */
     @Test
     public void test() {
         GridTest gridTest = new GridTest(1);

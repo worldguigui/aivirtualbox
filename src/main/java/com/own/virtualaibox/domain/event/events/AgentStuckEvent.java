@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Agent 卡死事件（P3）
+ * Agent 卡死事件。
  * 当单个 Agent 连续多个 tick 原地不动（如被世界边界钳制）时发布。
  */
 @Data

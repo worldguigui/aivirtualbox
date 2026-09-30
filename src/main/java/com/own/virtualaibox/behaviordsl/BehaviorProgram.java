@@ -1,14 +1,14 @@
 package com.own.virtualaibox.behaviordsl;
 
+import java.util.Map;
+
 import com.own.virtualaibox.secd.Instruction;
 import com.own.virtualaibox.secd.value.Value;
 
-import java.util.Map;
-
 /**
- * P5 行为程序：一个 {@code *.lambda} 文件编译后的结果。
+ * 行为程序：一个 {@code *.lambda} 文件编译后的结果。
  *
- * <p>契约（docs/secd-fusion-design-frozen.md §10 / §P5）：</p>
+ * <p>契约：定义入口程序、顶层环境和相遇处理行为。</p>
  * <ul>
  *   <li>{@link #plan()}：入口程序（Instruction），直接内联引用自由变量
  *       {@code dx}/{@code dy}；运行时把 E 种子为 {@code defs + {dx,dy}} 后执行；</li>

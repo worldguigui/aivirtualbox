@@ -1,5 +1,6 @@
 import type { Agent } from '../types'
 
+/** Agent 列表面板的输入属性。 */
 interface AgentListProps {
   agents: Agent[]
   tick: number
@@ -7,7 +8,7 @@ interface AgentListProps {
   onSelectAgent: (id: string) => void
 }
 
-/** Agents & Memory 面板:Agent 卡片(位置 / 记忆统计 / 记忆摘要 / 最近记忆),点击选中高亮 */
+/** 渲染 Agent 列表、位置、记忆统计和最近记忆，并处理选中状态。 */
 export function AgentList({ agents, tick, selectedAgentId, onSelectAgent }: AgentListProps) {
   return (
     <div className="panel">

@@ -1,3 +1,4 @@
+/** 模拟控制面板的输入属性。 */
 interface SimulationControlsProps {
   autoRunning: boolean
   autoSpeed: number
@@ -15,7 +16,7 @@ interface SimulationControlsProps {
   onFilterTextChange: (value: string) => void
 }
 
-/** 模拟控制面板:单步 / 自动 / 刷新 / 停止 + 滑杆与过滤 */
+/** 提供单步、自动运行、刷新、停止、速度和过滤控制。 */
 export function SimulationControls({
   autoRunning,
   autoSpeed,

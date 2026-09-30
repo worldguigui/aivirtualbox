@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Agent, WorldInfo } from '../types'
 
+/** 世界地图组件的输入属性。 */
 interface WorldMapProps {
   agents: Agent[]
   tick: number
@@ -13,6 +14,7 @@ interface WorldMapProps {
 const CANVAS_BASE = 960
 const AGENT_COLORS = ['#5eead4', '#7c8cff', '#ffb86b', '#ff6b88', '#9ef7ea', '#9bffd9']
 
+/** 绘制世界地图所需的画布和 Agent 参数。 */
 interface DrawOptions {
   agents: Agent[]
   tick: number
@@ -22,7 +24,7 @@ interface DrawOptions {
   cellSize: number
 }
 
-/** 世界地图绘制逻辑(由原 index.html drawWorld 迁移,改为显式传参的纯函数) */
+/** 按给定世界尺寸和 Agent 状态绘制网格地图。 */
 function drawWorld(ctx: CanvasRenderingContext2D, { agents, tick, selectedAgentId, width, height, cellSize }: DrawOptions) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
@@ -110,7 +112,7 @@ function drawWorld(ctx: CanvasRenderingContext2D, { agents, tick, selectedAgentI
   ctx.fillText(`tick ${tick}`, 14, 20)
 }
 
-/** World Map 面板:Canvas 世界地图 + overlay 标签 + 渲染状态 */
+/** 渲染 Canvas 世界地图、状态标签和当前 tick。 */
 export function WorldMap({ agents, tick, world, selectedAgentId, status }: WorldMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 

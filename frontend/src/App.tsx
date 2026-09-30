@@ -9,7 +9,7 @@ import { AgentList } from './components/AgentList'
 import { EventList } from './components/EventList'
 import { MindViewer } from './components/MindViewer'
 
-/** 渲染状态徽标(由原 render-status badge 的 Idle/Syncing/Live/Stepping/Offline 语义迁移) */
+/** 根据查询和步进状态生成界面状态徽标。 */
 function deriveStatus(stepping: boolean, isError: boolean, isLoading: boolean, isFetching: boolean, hasData: boolean) {
   if (stepping) return 'Stepping'
   if (isError) return 'Offline'
@@ -19,6 +19,7 @@ function deriveStatus(stepping: boolean, isError: boolean, isLoading: boolean, i
   return 'Idle'
 }
 
+/** 渲染仪表盘主界面并协调筛选、选中和模拟控制状态。 */
 export default function App() {
   // 面板控制状态(原全局 state 对象)
   const [autoRunning, setAutoRunning] = useState(false)
@@ -41,7 +42,7 @@ export default function App() {
   const toggleAutoRun = useCallback(() => setAutoRunning((running) => !running), [])
   const stopAutoRun = useCallback(() => setAutoRunning(false), [])
 
-  // 文本过滤(与旧前端一致:名字 / id / 记忆摘要 / 最近记忆,事件类型 / 描述 / 来源 / detail)
+  // 文本过滤：匹配名字、ID、记忆摘要、最近记忆、事件类型、描述、来源和 detail
   const text = filterText.trim().toLowerCase()
   const visibleAgents = useMemo(
     () => applyFilter(data?.agents ?? [], (agent) => agentMatchesFilter(agent, text)),

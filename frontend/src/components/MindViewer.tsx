@@ -21,7 +21,7 @@ function statusBadge(status: MindState['status'] | undefined) {
   }
 }
 
-/** SECD Mind 面板：展示选中 Agent 的 S/E/C/D 四寄存器状态（P4）。 */
+/** SECD Mind 面板：展示选中 Agent 的 S/E/C/D 四寄存器状态。 */
 export function MindViewer({ agentName, agentId, mind, tick }: MindViewerProps) {
   const badge = statusBadge(mind?.status)
 

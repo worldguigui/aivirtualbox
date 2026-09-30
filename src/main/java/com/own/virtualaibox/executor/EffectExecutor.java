@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 副作用执行器（P1）：把 SECD 计算产出的 {@link Effect} 落地到 World。
+ * 副作用执行器：把 SECD 计算产出的 {@link Effect} 落地到 World。
  *
  * <p>SECD 只计算、只产生意图；本类负责真正的世界副作用：</p>
  * <ul>
@@ -62,7 +62,7 @@ public class EffectExecutor {
                 new MoveAction(move.agentId(), move.deltaX(), move.deltaY(), move.reason()),
                 world);
 
-        // 兼容旧决策事件：移动即本次心智的决定
+        // 发布移动对应的本次心智决定事件
         Agent agent = findAgent(world, move.agentId());
         if (agent != null) {
             AgentDecidedEvent decided = new AgentDecidedEvent();

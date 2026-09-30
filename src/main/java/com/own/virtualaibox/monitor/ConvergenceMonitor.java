@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * 收敛 / 活锁检测器（P3）。
+ * 收敛 / 活锁检测器。
  *
  * <p>对应设计（docs/secd-fusion-design-frozen.md §9）：把"归一化"落地为工程检测：</p>
  * <ul>
@@ -293,7 +293,7 @@ public class ConvergenceMonitor {
     }
 
     /**
-     * 当前收敛状态快照（P4 dashboard 收敛指示器）。
+      * 当前收敛状态快照（供 dashboard 收敛指示器使用）。
      *
      * <p>反映当前仍处于"已检出"状态（边沿触发尚未被打破）的检测结果。</p>
      */

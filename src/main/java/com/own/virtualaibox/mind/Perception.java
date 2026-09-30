@@ -3,7 +3,7 @@ package com.own.virtualaibox.mind;
 import com.own.virtualaibox.secd.value.AgentRefValue;
 
 /**
- * 感知（P6）：Agent 行为程序可查询的**只读**世界视图（docs §17.3）。
+ * 感知：Agent 行为程序可查询的只读世界视图。
  *
  * <p>对应 Agent 组成中的 Perception 输入通道（docs §4）。感知是"读"——把值压入
  * SECD S 栈，**不产生 Effect、不触碰世界**。Java 层允许返回 {@code null} 表达

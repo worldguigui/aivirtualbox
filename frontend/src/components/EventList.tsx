@@ -79,6 +79,7 @@ function groupByTick(events: DashboardEvent[]): { tick: number; events: Dashboar
       .map(([tick, events]) => ({ tick, events }))
 }
 
+/** 事件列表面板的输入属性。 */
 interface EventListProps {
   events: DashboardEvent[]
 }

@@ -1,5 +1,6 @@
 import type { ConvergenceInfo, Metrics, WorldInfo } from '../types'
 
+/** 系统状态面板的输入属性。 */
 interface StatusPanelProps {
   world?: WorldInfo
   metrics?: Metrics
@@ -7,7 +8,7 @@ interface StatusPanelProps {
   convergence?: ConvergenceInfo
 }
 
-/** System Status 面板:世界尺寸、订阅者数、记忆覆盖率、收敛状态 + 架构时间线 */
+/** 渲染世界尺寸、订阅者数、记忆覆盖率和收敛状态。 */
 export function StatusPanel({ world, metrics, memoryCoverage, convergence }: StatusPanelProps) {
   const stuckCount = convergence?.stuckAgents.length ?? 0
   const loopCount = convergence?.loopAgents.length ?? 0

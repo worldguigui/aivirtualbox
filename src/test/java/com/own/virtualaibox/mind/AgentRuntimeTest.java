@@ -32,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * P1 融合验证：SECD 心智运行时产出 Effect，世界副作用与计算隔离。
+ * 验证 SECD 心智运行时产出 Effect，且世界副作用与计算隔离。
  *
- * <p>验证点（docs/secd-fusion-design-frozen.md §P1 验收）：</p>
+ * <p>验证点包括默认计划、跨 tick 执行和副作用隔离：</p>
  * <ul>
  *   <li>心智驱动：AgentRuntime 每 tick 产出移动副作用，不再由 LLM 直接决定每个动作；</li>
  *   <li>多 tick 计划：行为程序驻留 C 栈，每 tick 只推进一步动作，耗尽后自动重编译；</li>
