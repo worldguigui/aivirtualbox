@@ -23,9 +23,9 @@ import com.own.virtualaibox.secd.value.VoidValue;
 import java.util.List;
 
 /**
- * 世界原语求值器（P1）：在纯算术之上注入世界副作用原语。
+ * 世界原语求值器：在纯算术之上注入世界副作用原语。
  *
- * <p>原语语义（对应 docs/secd-fusion-design-frozen.md §9 DSL 草案，这里以 λ 操作符实现）：</p>
+ * <p>原语语义以 λ 操作符实现：</p>
  * <ul>
  *   <li>{@code move dx dy} —— 二元，产生 {@link MoveEffect}</li>
  *   <li>{@code speak target content} —— 二元，产生 {@link SpeakEffect}</li>
@@ -42,7 +42,7 @@ public class WorldOpEvaluator implements OpEvaluator {
     private final Agent agent;
     private final LLMBrain llmBrain;
     private final ArithmeticOpEvaluator arithmetic = new ArithmeticOpEvaluator();
-    /** P6 感知（每 tick 由 AgentRuntime 注入的世界只读快照）；null 表示纯算术上下文。 */
+    /** 感知（每 tick 由 AgentRuntime 注入的世界只读快照）；null 表示纯算术上下文。 */
     private Perception perception;
 
     public WorldOpEvaluator(Agent agent, LLMBrain llmBrain) {
@@ -50,7 +50,7 @@ public class WorldOpEvaluator implements OpEvaluator {
         this.llmBrain = llmBrain;
     }
 
-    /** P6：注入本 tick 的感知快照（AgentRuntime 每 tick 调用一次）。 */
+    /** 注入本 tick 的感知快照（AgentRuntime 每 tick 调用一次）。 */
     public void setPerception(Perception perception) {
         this.perception = perception;
     }
@@ -63,7 +63,7 @@ public class WorldOpEvaluator implements OpEvaluator {
                 case "ask-llm" -> {
                     return askLlm(state, arg);
                 }
-                // P6 感知原语（一元，世界只读，null → #f）
+                // 感知原语（一元，世界只读，null → #f）
                 case "self" -> {
                     pushValue(state, perceptionRequired().self());
                     return List.of();
@@ -87,7 +87,7 @@ public class WorldOpEvaluator implements OpEvaluator {
                     pushValue(state, d == null ? new BoolValue(false) : new DirectionValue(d));
                     return List.of();
                 }
-                // P6 方向移动：一元立即完成 → 统一 MoveEffect(deltaX, deltaY)
+                // 方向移动：一元立即完成，统一生成 MoveEffect(deltaX, deltaY)
                 case "move" -> {
                     if (arg instanceof DirectionValue d) {
                         return moveByDirection(state, d);
@@ -120,7 +120,7 @@ public class WorldOpEvaluator implements OpEvaluator {
         return arithmetic.apply(state, func, arg);
     }
 
-    // ------------------------------------------------------------------ P6 感知辅助
+    // ------------------------------------------------------------------ 感知辅助
 
     /** 感知原语必须运行在有 Perception 注入的 tick 内（fail-fast，docs §17.4）。 */
     private Perception perceptionRequired() {

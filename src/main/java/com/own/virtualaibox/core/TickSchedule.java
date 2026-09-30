@@ -1,5 +1,14 @@
 package com.own.virtualaibox.core;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Component;
+
 import com.own.virtualaibox.domain.agent.Agent;
 import com.own.virtualaibox.domain.event.EventBus;
 import com.own.virtualaibox.domain.event.events.AgentMetEvent;
@@ -10,23 +19,12 @@ import com.own.virtualaibox.effect.Effect;
 import com.own.virtualaibox.executor.EffectExecutor;
 import com.own.virtualaibox.mind.MindController;
 import com.own.virtualaibox.monitor.ConvergenceMonitor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tick 调度器（5 阶段骨架）。
- *
- * <p>P1 起决策阶段不再直接调用 LLMBrain，而是由 {@link MindController}
- * 驱动每个 Agent 的 SECD 运行时（跨 tick 的行为程序）产出 {@link Effect}；
- * 执行阶段由 {@link EffectExecutor} 把副作用落地到 World。
- * SECD=计算、Effect=意图、EffectExecutor=执行副作用，三者隔离。</p>
+ * 按固定顺序推进世界 tick，并协调决策、效果执行、交互检测和收敛检测。
+ * Agent 的心智运行时只产生 {@link Effect}，世界状态由 {@link EffectExecutor} 统一更新。
  */
 @Component
 @Slf4j
@@ -40,6 +38,14 @@ public class TickSchedule {
     /** 当前已处于相遇状态的 pair（id1|id2 排序键），用于"首次相遇才对话"去抖。 */
     private final Set<String> activeMeetings = ConcurrentHashMap.newKeySet();
 
+    /**
+     * 创建 tick 调度器。
+     *
+     * @param mindController 驱动 Agent 心智运行时的控制器
+     * @param effectExecutor 将副作用应用到世界的执行器
+     * @param eventBus 发布 tick 和交互事件的事件总线
+     * @param convergenceMonitor 检测世界及 Agent 收敛状态的监视器
+     */
     public TickSchedule(MindController mindController, EffectExecutor effectExecutor,
                         EventBus eventBus, ConvergenceMonitor convergenceMonitor) {
         this.mindController = mindController;
@@ -48,27 +54,33 @@ public class TickSchedule {
         this.convergenceMonitor = convergenceMonitor;
     }
 
+    /**
+     * 执行一个完整的世界 tick，并在异常发生时记录错误。
+     *
+     * @param tick 当前 tick 编号
+     * @param world 待推进的世界
+     */
     public void processTick(int tick, World world) {
         long startTime = System.currentTimeMillis();
         log.info("TickSchedule: Processing tick {}", tick);
 
         try {
-            // Phase 1: 发布Tick开始事件
+            // 发布 tick 开始事件
             publishTickStarted(tick);
 
-            // Phase 2: 决策阶段 - 心智（SECD）推进所有Agent，产出副作用
+            // 推进所有 Agent 的心智运行时并收集副作用
             List<Effect> effects = decisionPhase(tick, world);
 
-            // Phase 3: 执行阶段 - 落地全部副作用
+            // 将收集到的副作用应用到世界
             executionPhase(tick, effects, world);
 
-            // Phase 4: 交互检测阶段 - 检测Agent相遇
+            // 检测 Agent 相遇并处理相遇交互
             interactionPhase(tick, world);
 
-            // Phase 4.5: 收敛检测阶段（P3） - 不动点/卡死/周期振荡/无限归约
+            // 检测世界不动点、Agent 卡死、位置周期和 D 栈增长
             convergencePhase(tick, world);
 
-            // Phase 5: 发布Tick结束事件
+            // 发布 tick 结束事件
             long executionTime = System.currentTimeMillis() - startTime;
             publishTickEnded(tick, executionTime);
 
@@ -80,7 +92,9 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 1: 发布Tick开始事件
+     * 发布当前 tick 的开始事件。
+     *
+     * @param tick 当前 tick 编号
      */
     private void publishTickStarted(int tick) {
         TickStartedEvent event = new TickStartedEvent();
@@ -94,7 +108,11 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 2: 决策阶段
+     * 推进所有 Agent 的心智运行时并返回产生的副作用。
+     *
+     * @param tick 当前 tick 编号
+     * @param world 当前世界
+     * @return 本 tick 待执行的副作用列表
      */
     private List<Effect> decisionPhase(int tick, World world) {
         log.info("TickSchedule: Entering decision phase, current tick: {}", tick);
@@ -102,7 +120,11 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 3: 执行阶段
+     * 将副作用应用到当前世界。
+     *
+     * @param tick 当前 tick 编号
+     * @param effects 待执行的副作用列表
+     * @param world 接收副作用的世界
      */
     private void executionPhase(int tick, List<Effect> effects, World world) {
         log.info("TickSchedule: Entering execution phase, current tick: {}", tick);
@@ -110,11 +132,14 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 4: 交互检测阶段
+     * 检测 Agent 相遇，发布相遇事件，并为首次相遇生成对话副作用。
      *
      * <p>检测相遇 → 发布 AgentMetEvent → <b>首次相遇</b>触发 onMeet 对话
-     * （双方各中断当前 SECD 主计划、执行对话程序、经 D 栈恢复），
-     * 对话副作用本 tick 落地（P2）。</p>
+      * （双方各中断当前 SECD 主计划、执行对话程序、经 D 栈恢复），
+      * 对话副作用在当前 tick 落地。</p>
+    *
+      * @param tick 当前 tick 编号
+      * @param world 用于查找 Agent 和应用对话副作用的世界
      */
     private void interactionPhase(int tick, World world) {
         log.info("TickSchedule: Entering interaction detection phase, current tick: {}", tick);
@@ -155,19 +180,28 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 4.5: 收敛检测阶段（P3）
+     * 检查执行交互后的世界状态及 Agent 运行时状态，并发布收敛相关事件。
      *
      * <p>观察执行后的世界状态，检测不动点（WorldConverged）、Agent 卡死（AgentStuck）、
-     * 位置周期（AgentLoop）与 SECD D 栈膨胀（无限归约启发式），发布对应事件。
-     * 检测在 interactionPhase 之后、publishTickEnded 之前进行，
-     * 使收敛事件计入本 tick 的事件统计。</p>
-     */
+      * 位置周期（AgentLoop）与 SECD D 栈膨胀（无限归约启发式），发布对应事件。
+      * 检测在交互处理之后、发布 tick 结束事件之前进行，
+      * 使收敛事件计入本 tick 的事件统计。
+    *
+     * @param tick 当前 tick 编号
+     * @param world 当前世界
+    */
     private void convergencePhase(int tick, World world) {
         log.info("TickSchedule: Entering convergence detection phase, current tick: {}", tick);
         convergenceMonitor.monitor(tick, world);
     }
 
-    /** 相遇 pair 的排序键（与顺序无关）。 */
+    /**
+     * 生成与 Agent 参数顺序无关的相遇键。
+     *
+     * @param a1 第一个 Agent
+     * @param a2 第二个 Agent
+     * @return 由两个 Agent ID 按字典序组成的相遇键
+     */
     private String pairKey(Agent a1, Agent a2) {
         return a1.getId().compareTo(a2.getId()) <= 0
                 ? a1.getId() + "|" + a2.getId()
@@ -175,7 +209,10 @@ public class TickSchedule {
     }
 
     /**
-     * Phase 5: 发布Tick结束事件
+     * 发布当前 tick 的结束事件，并记录该 tick 的事件数量和执行耗时。
+     *
+     * @param tick 当前 tick 编号
+     * @param executionTime 当前 tick 的执行耗时，单位为毫秒
      */
     private void publishTickEnded(int tick, long executionTime) {
         TickEndedEvent event = new TickEndedEvent();
@@ -196,6 +233,14 @@ public class TickSchedule {
         eventBus.publish(event);
     }
 
+    /**
+     * 发布两个 Agent 相遇的领域事件。
+     *
+     * @param tick 当前 tick 编号
+     * @param agent1 第一个相遇的 Agent
+     * @param agent2 第二个相遇的 Agent
+     * @param distance 两个 Agent 之间的距离
+     */
     private void publishAgentMet(int tick, Agent agent1, Agent agent2, double distance) {
         AgentMetEvent event = new AgentMetEvent();
         event.setEventId(agent1.getId() + "_met_" + agent2.getId() + "_" + tick);
@@ -215,6 +260,13 @@ public class TickSchedule {
         log.info("TickSchedule: Detected agents meeting - {} and {}", agent1.getName(), agent2.getName());
     }
 
+    /**
+     * 计算两个 Agent 当前坐标之间的欧氏距离。
+     *
+     * @param agent1 第一个 Agent
+     * @param agent2 第二个 Agent
+     * @return 两个 Agent 之间的欧氏距离
+     */
     private double calculateDistance(Agent agent1, Agent agent2) {
         int dx = agent1.getState().getX() - agent2.getState().getX();
         int dy = agent1.getState().getY() - agent2.getState().getY();

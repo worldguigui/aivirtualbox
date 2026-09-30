@@ -1,13 +1,14 @@
 package com.own.virtualaibox.domain.agent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.own.virtualaibox.domain.event.EventListener;
 import com.own.virtualaibox.domain.memory.AgentMemory;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -30,7 +31,7 @@ public class Agent implements EventListener {
     public void onEvent(com.own.virtualaibox.domain.event.DomainEvent event) {
         if (!active) return;
 
-        // 防御：eventHistory 可能被 @AllArgsConstructor 覆盖为 null（WorldEngine 旧代码传入 null）
+        // 防御：eventHistory 可能被 @AllArgsConstructor 覆盖为 null
         if (eventHistory == null) {
             eventHistory = new ArrayList<>();
         }

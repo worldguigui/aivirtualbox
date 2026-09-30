@@ -21,7 +21,7 @@ import java.util.Stack;
  * </ul>
  *
  * <p>默认使用 {@link ArithmeticOpEvaluator}（纯算术原语）。
- * P1 起可注入世界原语求值器（move/speak/remember/ask-llm），
+ * 可注入世界原语求值器（move/speak/remember/ask-llm），
  * 此时对应原语以 Effect 形式表达世界副作用。</p>
  */
 public class SECD {
@@ -89,7 +89,7 @@ public class SECD {
                 state.getC().push(instructions.get(i));
             }
         }
-        // 条件分支（P6）：弹出 S 顶作为条件，真则压入 then，假则压入 otherwise（C 栈同构，无新 D 帧）
+        // 条件分支：弹出 S 顶作为条件，真则压入 then，假则压入 otherwise（C 栈同构，无新 D 帧）
         else if (inst instanceof InstIfThenElse ite) {
             Value cond = state.getS().pop();
             state.getC().push(BoolValue.isTruthy(cond) ? ite.then : ite.otherwise);
@@ -147,7 +147,7 @@ public class SECD {
 
     /**
      * 从当前状态继续运行，直到 C/D 清空或触发发散检测。
-     * 支持"恢复被挂起的计划"（P1/P2 的 resume 语义）。
+      * 支持恢复被挂起的计划。
      */
     public Reduction run(MachineState state) {
         List<Effect> allEffects = new ArrayList<>();

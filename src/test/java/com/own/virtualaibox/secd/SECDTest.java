@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * P0 移植验证：程序化构造 λ 表达式，验证 SECD 归约正确性。
+ * 验证程序化构造的 λ 表达式和 SECD 归约正确性。
  *
  * <p>用例对应 lambdaexpr {@code LambdaExprTest} 中的代表性场景：
  * 算术柯里化、一元原语、闭包应用、闭包环境捕获、纯 λ 丘奇数、发散检测。
@@ -186,7 +186,7 @@ class SECDTest {
         assertTrue(state.isTerminated(), "运行结束后 C/D 栈应为空");
     }
 
-    // ---------------------------------------------------------- P6 条件/比较
+    // ---------------------------------------------------------- 条件/比较
 
     private static Instruction ifThenElse(Instruction cond, Instruction then, Instruction otherwise) {
         return new InstSeq(List.of(cond, new InstIfThenElse(then, otherwise)));

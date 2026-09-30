@@ -32,7 +32,7 @@ import java.util.Stack;
  *   <li>只产出 {@link Effect}，不直接修改 World（副作用交给 EffectExecutor）。</li>
  * </ul>
  *
- * <p>P2 增加 D 栈中断/恢复：{@link #interrupt} 把主计划执行现场挂起到 D 栈并加载
+ * <p>支持 D 栈中断/恢复：{@link #interrupt} 把主计划执行现场挂起到 D 栈并加载
  * handler（如 onMeet 对话程序）；handler 求值结束后由 {@link #runHandler} 解开全部
  * continuation 帧，主计划从被中断的精确位置继续。</p>
  */
@@ -48,12 +48,12 @@ public class AgentRuntime {
     private final SECD secd;
     private final WorldOpEvaluator evaluator;
     private final DefaultPlanCompiler planCompiler;
-    /** P5 行为程序（来自 .lambda 配置）；为 null 时回退到内置 DefaultPlanCompiler。 */
+    /** 行为程序（来自 .lambda 配置）；为 null 时回退到内置 DefaultPlanCompiler。 */
     private final BehaviorProgram behaviorProgram;
 
-    /** 上次编译的行为程序（C 栈快照，P4 可视化预览；机器 idle 时也保留）。 */
+    /** 上次编译的行为程序（C 栈快照，供可视化预览；机器 idle 时也保留）。 */
     private List<String> lastProgram = List.of();
-    /** 上次 tick 产出的副作用摘要（P4 可视化预览）。 */
+    /** 上次 tick 产出的副作用摘要（供可视化预览）。 */
     private List<String> lastActions = List.of();
 
     public AgentRuntime(Agent agent, LLMBrain llmBrain) {
@@ -79,7 +79,7 @@ public class AgentRuntime {
      */
     public List<Effect> tick(WorldState worldState) {
         List<Effect> effects = new ArrayList<>();
-        // P6：注入本 tick 的世界只读快照（供感知原语查询；同一 tick 内确定性一致）
+        // 注入本 tick 的世界只读快照（供感知原语查询；同一 tick 内确定性一致）
         evaluator.setPerception(WorldPerception.of(agent, worldState));
         if (state.isTerminated()) {
             if (behaviorProgram == null) {
@@ -104,7 +104,7 @@ public class AgentRuntime {
     }
 
     /**
-     * P5：编译 DSL 行为程序并压入 C 栈。
+      * 编译 DSL 行为程序并压入 C 栈。
      *
      * <p>E 以 {@code defs + {dx, dy}} 为种子：plan 是内联程序，直接引用自由变量
      * {@code dx}/{@code dy}（由 LLM Oracle 决定的移动方向）。plan 为扁平程序
@@ -120,7 +120,7 @@ public class AgentRuntime {
     }
 
     /**
-     * 中断（P2）：把当前主计划执行现场挂起到 D 栈，加载 handler。
+      * 中断：把当前主计划执行现场挂起到 D 栈，加载 handler。
      *
      * <p>语义与闭包应用的挂起一致（docs §8）：D 栈保存 {S,E,C,D} 快照，
      * 之后恢复时从 D 弹出该帧整体换回，主计划从被中断处精确继续。</p>
@@ -139,10 +139,10 @@ public class AgentRuntime {
     }
 
     /**
-     * 处理中断（P2）：把 handler 及其 continuation 全部求值完，直到主计划恢复
+      * 处理中断：把 handler 及其 continuation 全部求值完，直到主计划恢复
      * （D 栈的最后一个中断帧被解开）或步数预算耗尽。
      *
-     * <p>P5 修正：handler 内的闭包续体（如 DSL {@code onMeet = λother. { greet other; persona other }}）
+      * <p>handler 内的闭包续体（如 DSL {@code onMeet = λother. { greet other; persona other }}）
      * 解帧后 C 仍可能非空，必须继续求值而不是停在解帧处；当 D 栈清空（中断帧已解开、
      * 主计划已换回 C 栈）即停止，避免在 meet tick 里推进主计划。</p>
      *
@@ -190,7 +190,7 @@ public class AgentRuntime {
         return state.isTerminated();
     }
 
-    /** P5 行为程序（可能为 null，表示回退内置行为）。 */
+    /** 行为程序（可能为 null，表示回退内置行为）。 */
     public BehaviorProgram getBehaviorProgram() {
         return behaviorProgram;
     }
@@ -209,9 +209,9 @@ public class AgentRuntime {
     }
 
     /**
-     * 捕获当前 SECD 四寄存器状态摘要（P4 可视化）。
+      * 捕获当前 SECD 四寄存器状态摘要。
      *
-     * <p>供 dashboard 暴露"每 Agent 的行为执行状态"（docs/secd-fusion-design-frozen.md §14 P4）：
+      * <p>供 dashboard 暴露每个 Agent 的行为执行状态：
      * 状态机状态（idle / executing / suspended）+ S/E/C/D 规模与栈顶预览。
      * 预览取栈顶数条，避免传输整个栈。</p>
      */

@@ -1,3 +1,6 @@
+import { BilingualText } from './i18n'
+
+/** 模拟控制面板的输入属性。 */
 interface SimulationControlsProps {
   autoRunning: boolean
   autoSpeed: number
@@ -15,7 +18,7 @@ interface SimulationControlsProps {
   onFilterTextChange: (value: string) => void
 }
 
-/** 模拟控制面板:单步 / 自动 / 刷新 / 停止 + 滑杆与过滤 */
+/** 提供单步、自动运行、刷新、停止、速度和过滤控制。 */
 export function SimulationControls({
   autoRunning,
   autoSpeed,
@@ -36,26 +39,26 @@ export function SimulationControls({
     <>
       <div className="panel-header">
         <div>
-          <div className="panel-title">Simulation Controls</div>
+          <BilingualText primary="Simulation Controls" secondary="运行控制" className="panel-title" />
           <div className="panel-subtitle">单步、自动播放、刷新、过滤和节流</div>
         </div>
         <div className="control-row">
-          <button className="primary" onClick={onStep}>Step Tick</button>
+          <button className="primary" onClick={onStep}><BilingualText primary="Step" secondary="推进一刻" /></button>
           <button
             className="secondary"
             onClick={onToggleAuto}
             style={{ opacity: autoRunning ? 0.88 : 1 }}
           >
-            {autoRunning ? 'Auto Running' : 'Auto Run'}
+            <BilingualText primary={autoRunning ? 'Running' : 'Auto Run'} secondary={autoRunning ? '自动运行中' : '自动运行'} />
           </button>
-          <button className="ghost" onClick={onRefresh}>Refresh</button>
-          <button className="danger" onClick={onStop}>Stop</button>
+          <button className="ghost" onClick={onRefresh}><BilingualText primary="Refresh" secondary="刷新" /></button>
+          <button className="danger" onClick={onStop}><BilingualText primary="Stop" secondary="停止" /></button>
         </div>
       </div>
       <div className="panel-body">
         <div className="controls">
           <div className="control-box">
-            <label htmlFor="speed-range">Auto Speed: <span>{autoSpeed}ms</span></label>
+            <label htmlFor="speed-range"><BilingualText primary="Interval" secondary="运行间隔" />：<span>{autoSpeed} 毫秒</span></label>
             <input
               id="speed-range"
               type="range"
@@ -67,7 +70,7 @@ export function SimulationControls({
             />
           </div>
           <div className="control-box">
-            <label htmlFor="event-limit">Event Limit</label>
+            <label htmlFor="event-limit"><BilingualText primary="Event Limit" secondary="事件数量" /></label>
             <input
               id="event-limit"
               type="range"
@@ -79,7 +82,7 @@ export function SimulationControls({
             />
           </div>
           <div className="control-box">
-            <label htmlFor="memory-limit">Memory Limit</label>
+            <label htmlFor="memory-limit"><BilingualText primary="Memory Limit" secondary="记忆数量" /></label>
             <input
               id="memory-limit"
               type="range"
@@ -91,7 +94,7 @@ export function SimulationControls({
             />
           </div>
           <div className="control-box">
-            <label htmlFor="agent-filter">Filter Agent / Event</label>
+            <label htmlFor="agent-filter"><BilingualText primary="Filter" secondary="筛选居民 / 事件" /></label>
             <input
               id="agent-filter"
               type="search"
@@ -102,7 +105,7 @@ export function SimulationControls({
           </div>
         </div>
         <div className="footer-line">
-          <span>快捷键:Space = 单步,A = 自动运行,R = 刷新</span>
+          <span>快捷键：空格推进，A 自动运行，R 刷新</span>
           <span>{lastSync}</span>
         </div>
       </div>

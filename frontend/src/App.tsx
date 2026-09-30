@@ -1,26 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useDashboard } from './hooks/useDashboard'
 import { applyFilter, agentMatchesFilter, eventMatchesFilter, formatTime } from './lib/format'
-import { BrandHeader } from './components/BrandHeader'
-import { StatusPanel } from './components/StatusPanel'
-import { SimulationControls } from './components/SimulationControls'
-import { WorldMap } from './components/WorldMap'
-import { AgentList } from './components/AgentList'
-import { EventList } from './components/EventList'
-import { MindViewer } from './components/MindViewer'
+import { AppShell } from './components/AppShell'
+import { OverviewPage } from './pages/OverviewPage'
+import { WorldPage } from './pages/WorldPage'
+import { AgentsPage } from './pages/AgentsPage'
+import { EventsPage } from './pages/EventsPage'
+import { RuntimePage } from './pages/RuntimePage'
 
-/** 渲染状态徽标(由原 render-status badge 的 Idle/Syncing/Live/Stepping/Offline 语义迁移) */
+/** 根据查询和步进状态生成界面状态徽标。 */
 function deriveStatus(stepping: boolean, isError: boolean, isLoading: boolean, isFetching: boolean, hasData: boolean) {
-  if (stepping) return 'Stepping'
-  if (isError) return 'Offline'
-  if (isLoading) return 'Loading'
-  if (isFetching) return 'Syncing'
-  if (hasData) return 'Live'
-  return 'Idle'
+  if (stepping) return '推进中'
+  if (isError) return '离线'
+  if (isLoading) return '加载中'
+  if (isFetching) return '同步中'
+  if (hasData) return '运行中'
+  return '空闲'
 }
 
+/** 渲染仪表盘主界面并协调筛选、选中和模拟控制状态。 */
 export default function App() {
-  // 面板控制状态(原全局 state 对象)
+  // 全局模拟控制状态由应用层持有，保证不同页面切换时不中断运行。
   const [autoRunning, setAutoRunning] = useState(false)
   const [autoSpeed, setAutoSpeed] = useState(650)
   const [eventLimit, setEventLimit] = useState(40)
@@ -41,7 +42,7 @@ export default function App() {
   const toggleAutoRun = useCallback(() => setAutoRunning((running) => !running), [])
   const stopAutoRun = useCallback(() => setAutoRunning(false), [])
 
-  // 文本过滤(与旧前端一致:名字 / id / 记忆摘要 / 最近记忆,事件类型 / 描述 / 来源 / detail)
+  // 文本过滤覆盖 Agent 和事件的主要可读字段。
   const text = filterText.trim().toLowerCase()
   const visibleAgents = useMemo(
     () => applyFilter(data?.agents ?? [], (agent) => agentMatchesFilter(agent, text)),
@@ -52,13 +53,13 @@ export default function App() {
     [data, text],
   )
 
-  // 当前聚焦的 Agent：优先选中项，否则回退到第一个可见 Agent（供 SECD Mind 展示）
+  // 当前聚焦的 Agent 优先使用用户选择项，否则回退到第一个可见 Agent。
   const focusedAgent = useMemo(
     () => visibleAgents.find((agent) => agent.id === selectedAgentId) ?? visibleAgents[0] ?? null,
     [visibleAgents, selectedAgentId],
   )
 
-  // 键盘快捷键:Space = 单步,A = 自动运行,R = 刷新
+  // 在所有页面保留单步、自动运行和刷新的键盘入口。
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Space') {
@@ -74,73 +75,45 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [step, toggleAutoRun, refresh])
 
-  const memoryCoverage = useMemo(() => {
-    const withMemory = visibleAgents.filter((agent) => agent.memoryStats).length
-    return `${withMemory}/${visibleAgents.length || 1} agents`
-  }, [visibleAgents])
-
   const lastSync = data ? `Last sync: ${formatTime(data.metrics.serverTime)}` : 'Last sync: -'
   const status = deriveStatus(stepping, isError, isLoading, isFetching, Boolean(data))
 
+  const pageData = {
+    data,
+    visibleAgents,
+    visibleEvents,
+    focusedAgent,
+    selectedAgentId,
+    onSelectAgent: setSelectedAgentId,
+  }
+  const simulationProps = {
+    ...pageData,
+    autoRunning,
+    autoSpeed,
+    eventLimit,
+    memoryLimit,
+    filterText,
+    lastSync,
+    onStep: () => void step(),
+    onToggleAuto: toggleAutoRun,
+    onRefresh: () => void refresh(),
+    onStop: stopAutoRun,
+    onAutoSpeedChange: setAutoSpeed,
+    onEventLimitChange: setEventLimit,
+    onMemoryLimitChange: setMemoryLimit,
+    onFilterTextChange: setFilterText,
+  }
+
   return (
-    <div className="shell">
-      <section className="hero">
-        <BrandHeader
-          tick={data?.tick ?? 0}
-          agentCount={visibleAgents.length}
-          eventCount={visibleEvents.length}
-        />
-        <StatusPanel
-          world={data?.world}
-          metrics={data?.metrics}
-          memoryCoverage={memoryCoverage}
-          convergence={data?.convergence}
-        />
-      </section>
-
-      <section className="panel">
-        <SimulationControls
-          autoRunning={autoRunning}
-          autoSpeed={autoSpeed}
-          eventLimit={eventLimit}
-          memoryLimit={memoryLimit}
-          filterText={filterText}
-          lastSync={lastSync}
-          onStep={() => void step()}
-          onToggleAuto={toggleAutoRun}
-          onRefresh={() => void refresh()}
-          onStop={stopAutoRun}
-          onAutoSpeedChange={setAutoSpeed}
-          onEventLimitChange={setEventLimit}
-          onMemoryLimitChange={setMemoryLimit}
-          onFilterTextChange={setFilterText}
-        />
-      </section>
-
-      <section className="workspace">
-        <WorldMap
-          agents={visibleAgents}
-          tick={data?.tick ?? 0}
-          world={data?.world}
-          selectedAgentId={selectedAgentId}
-          status={status}
-        />
-        <AgentList
-          agents={visibleAgents}
-          tick={data?.tick ?? 0}
-          selectedAgentId={selectedAgentId}
-          onSelectAgent={setSelectedAgentId}
-        />
-        <div className="right-col">
-          <MindViewer
-            agentName={focusedAgent?.name ?? null}
-            agentId={focusedAgent?.id ?? null}
-            mind={focusedAgent?.mind ?? null}
-            tick={data?.tick ?? 0}
-          />
-          <EventList events={visibleEvents} />
-        </div>
-      </section>
-    </div>
+    <AppShell data={data} status={status} onRefresh={() => void refresh()}>
+      <Routes>
+        <Route path="/" element={<OverviewPage {...simulationProps} />} />
+        <Route path="/world" element={<WorldPage {...simulationProps} />} />
+        <Route path="/agents" element={<AgentsPage {...pageData} />} />
+        <Route path="/events" element={<EventsPage {...pageData} />} />
+        <Route path="/runtime" element={<RuntimePage {...pageData} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AppShell>
   )
 }

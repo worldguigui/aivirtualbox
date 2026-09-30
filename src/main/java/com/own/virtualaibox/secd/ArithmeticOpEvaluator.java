@@ -17,12 +17,12 @@ import java.util.Set;
 
 /**
  * 纯算术操作符求值器，移植自 lambdaexpr {@code SECDMachine.apply()} 中的
- * OpValue / PartialOpValue 分支。P0 的默认实现，无任何世界副作用。
+ * OpValue / PartialOpValue 分支。默认实现，无任何世界副作用。
  *
  * <p>支持的纯原语：一元 {@code sqr}、{@code succ}；二元 {@code add}、{@code mul}。
  * 当实参不是整数时，构造延迟闭包以便与丘奇数等纯 λ 表达式交互。</p>
  *
- * <p>P6 扩展比较原语：二元 {@code eq/lt/gt/le/ge} → {@link BoolValue}；
+ * <p>支持比较原语：二元 {@code eq/lt/gt/le/ge} → {@link BoolValue}；
  * {@code eq} 支持 Int/String/AgentRef（按 id），类型不符的其余比较 → {@code #f}
  * （docs §17.4）。比较仍走柯里化二元通道，可被 WorldOpEvaluator 委托（纯、无世界依赖）。</p>
  */
@@ -58,7 +58,7 @@ public class ArithmeticOpEvaluator implements OpEvaluator {
     }
 
     private Value computeBinary(MachineState state, String op, Value v1, Value v2) {
-        // P6 比较原语优先处理，避免落入"非整数 → 延迟闭包"分支
+        // 比较原语优先处理，避免落入"非整数 → 延迟闭包"分支
         if (COMPARE_OPS.contains(op)) {
             return compare(op, v1, v2);
         }
@@ -74,7 +74,7 @@ public class ArithmeticOpEvaluator implements OpEvaluator {
         throw new IllegalStateException("Binary Type error: " + op);
     }
 
-    /** P6 比较原语：eq 支持 Int/String/AgentRef；lt/gt/le/ge 仅 Int；类型不符 → #f。 */
+    /** 比较原语：eq 支持 Int/String/AgentRef；lt/gt/le/ge 仅 Int；类型不符 → #f。 */
     private Value compare(String op, Value v1, Value v2) {
         if (v1 instanceof IntValue i1 && v2 instanceof IntValue i2) {
             boolean r = switch (op) {

@@ -1,17 +1,19 @@
 package com.own.virtualaibox.brain;
 
+import java.util.Map;
+import java.util.Random;
+
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.own.virtualaibox.domain.action.MoveAction;
 import com.own.virtualaibox.domain.agent.Agent;
 import com.own.virtualaibox.domain.agent.AgentState;
 import com.own.virtualaibox.domain.world.WorldState;
+
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
-import java.util.Map;
-import java.util.Random;
 
 @Component
 @Slf4j
@@ -100,7 +102,7 @@ public class LLMBrain {
     }
 
     /**
-     * 直接咨询预言机（P1）：SECD 的 ask-llm 原语使用。
+      * 直接咨询预言机，供 SECD 的 ask-llm 原语使用。
      * 与 {@link #decideAction} 的区别：不做 JSON 决策解析，原样返回模型文本。
      */
     public String chat(String userPrompt) {

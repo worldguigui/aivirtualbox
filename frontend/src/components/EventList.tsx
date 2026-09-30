@@ -3,8 +3,29 @@ import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons'
 import { useRef, useState, useEffect } from 'react'
 import type { DashboardEvent } from '../types'
 import { formatTime } from '../lib/format'
+import { BilingualText } from './i18n'
 
 const { Text } = Typography
+
+const EVENT_LABELS: Record<string, string> = {
+  'tick.started': '刻度开始',
+  'tick.ended': '刻度结束',
+  'agent.moved': '居民移动',
+  'agent.met': '居民相遇',
+  'agent.decided': '居民决策',
+  'agent.spoke': '居民发言',
+  'agent.stuck': '居民停滞',
+  'agent.loop': '居民循环',
+  'world.converged': '世界收敛',
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  'tick-schedule': '刻度调度器',
+  'interaction-detector': '交互检测器',
+  'convergence-monitor': '收敛监视器',
+  'action-executor': '动作执行器',
+  'effect-executor': '副作用执行器',
+}
 
 /** 事件类型 → Tag 预设色（与后端 9 种 eventType 一一对应） */
 const EVENT_TAG_COLOR: Record<string, string> = {
@@ -79,11 +100,12 @@ function groupByTick(events: DashboardEvent[]): { tick: number; events: Dashboar
       .map(([tick, events]) => ({ tick, events }))
 }
 
+/** 事件列表面板的输入属性。 */
 interface EventListProps {
   events: DashboardEvent[]
 }
 
-/** Event Stream 面板：按 tick 分组的时间线展示事件流，支持全屏放大 */
+/** 事件流面板：按刻度分组展示事件时间线，并支持全屏查看。 */
 export function EventList({ events }: EventListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -118,11 +140,11 @@ export function EventList({ events }: EventListProps) {
       children: (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <Text strong style={{ fontSize: s.tickFontSize, color: '#fff' }}>
-              Tick {group.tick}
+              <BilingualText primary={`Step ${group.tick}`} secondary={`第 ${group.tick} 刻`} />
             </Text>
             <div style={{ flex: 1, borderTop: '1px dashed #444' }} />
             <Text type="secondary" style={{ fontSize: s.metaFontSize }}>
-              {group.events.length} events
+              <BilingualText primary={`${group.events.length} events`} secondary={`${group.events.length} 条事件`} />
             </Text>
           </div>
       ),
@@ -140,13 +162,13 @@ export function EventList({ events }: EventListProps) {
                     color={EVENT_TAG_COLOR[event.eventType] ?? 'default'}
                     style={{ marginInlineEnd: 0, fontSize: s.tagFontSize }}
                 >
-                  {event.eventType || 'event'}
+                  {EVENT_LABELS[event.eventType] ?? '其他事件'}
                 </Tag>
                 <Text style={{ fontSize: s.descFontSize }}>{event.description}</Text>
               </Space>
               <Text type="secondary" style={{ fontSize: s.metaFontSize }}>
-                {event.sourceSystem || '-'} · {formatTime(event.timestamp)} ·{' '}
-                {event.processed ? 'Processed' : 'Pending'}
+                {SOURCE_LABELS[event.sourceSystem] ?? event.sourceSystem ?? '系统'} · {formatTime(event.timestamp)} ·{' '}
+                {event.processed ? '已处理' : '待处理'}
               </Text>
               {detailText ? (
                   <Collapse
@@ -155,7 +177,7 @@ export function EventList({ events }: EventListProps) {
                       items={[
                         {
                           key: 'detail',
-                          label: <Text type="secondary" style={{ fontSize: s.metaFontSize }}>detail</Text>,
+                          label: <Text type="secondary" style={{ fontSize: s.metaFontSize }}>查看详情</Text>,
                           children: (
                               <pre
                                   style={{
@@ -182,7 +204,7 @@ export function EventList({ events }: EventListProps) {
       <div
           ref={containerRef}
           style={{
-            background: isFullscreen ? '#141414' : 'transparent',
+            background: isFullscreen ? '#f7f0df' : 'transparent',
             padding: s.containerPadding,
             height: s.containerHeight,
             overflowY: isFullscreen ? 'auto' : 'visible',
@@ -192,17 +214,17 @@ export function EventList({ events }: EventListProps) {
         <div className="panel">
           <div className="panel-header">
             <div>
-              <div className="panel-title">Event Stream</div>
-              <div className="panel-subtitle">按时间展示 Tick、移动、相遇、决策等事件</div>
+              <BilingualText primary="Event Stream" secondary="事件流" className="panel-title" />
+              <div className="panel-subtitle">按时间展示刻度、移动、相遇和决策等事件</div>
             </div>
             <Space size={8}>
-              <span className="badge">{events.length} items</span>
+              <span className="badge"><BilingualText primary={`${events.length} events`} secondary={`${events.length} 条`} /></span>
               <Button
                   size="small"
                   type="text"
                   icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
                   onClick={toggleFullscreen}
-                  style={{ color: '#fff' }}
+                  style={{ color: '#3f493b' }}
               />
             </Space>
           </div>
@@ -210,7 +232,7 @@ export function EventList({ events }: EventListProps) {
             {events.length === 0 ? (
                 <div className="empty">当前没有事件记录。</div>
             ) : (
-                <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+                <ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
                   <Timeline items={items} />
                 </ConfigProvider>
             )}

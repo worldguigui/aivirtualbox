@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * P3 验证：收敛 / 活锁检测（docs/secd-fusion-design-frozen.md §9 / §14 P3 验收）。
+ * 验证收敛 / 活锁检测。
  *
  * <p>验收点"构造'原地打转 / 周期振荡'Agent，能检出"逐一覆盖：</p>
  * <ul>

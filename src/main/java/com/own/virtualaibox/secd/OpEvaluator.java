@@ -8,8 +8,8 @@ import java.util.List;
 /**
  * 操作符值（OpValue / PartialOpValue）的应用处理器。
  *
- * <p>P0 提供 {@link ArithmeticOpEvaluator}（纯算术，无副作用）；
- * P1 将注入世界原语处理器（move/speak/remember/ask-llm），届时这些原语
+ * <p>默认实现 {@link ArithmeticOpEvaluator} 负责纯算术；
+ * 世界运行时可注入世界原语处理器（move/speak/remember/ask-llm），这些原语
  * 通过返回 {@link Effect} 来表达世界副作用，而不是直接修改 World。</p>
  */
 public interface OpEvaluator {

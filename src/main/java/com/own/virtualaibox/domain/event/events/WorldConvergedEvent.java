@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 世界收敛事件（P3）
+ * 世界收敛事件。
  * 当整个世界状态长期无变化（不动点 / 稳定态）时发布。
  */
 @Data

@@ -1,6 +1,6 @@
-/** 通用格式化工具(由原 index.html 内联逻辑迁移) */
+/** 仪表盘使用的通用格式化工具。 */
 
-/** 格式化时间戳:非法/空值返回 '-' */
+/** 格式化时间戳；非法或空值返回 '-'。 */
 export function formatTime(value: string | number | null | undefined): string {
   if (!value) return '-'
   const date = new Date(value)
@@ -16,7 +16,7 @@ export function applyFilter<T>(items: T[], matcher?: (item: T) => boolean): T[] 
   return items.filter(matcher)
 }
 
-/** 按过滤文本匹配 Agent:名字 / id / 记忆摘要 / 最近记忆内容 */
+/** 按过滤文本匹配 Agent 的名字、ID、记忆摘要和最近记忆内容。 */
 export function agentMatchesFilter(agent: { name: string; id: string; memorySummary: string; recentMemories: Array<{ content: string }> }, text: string): boolean {
   if (!text) return true
   const target = [agent.name, agent.id, agent.memorySummary, JSON.stringify(agent.recentMemories ?? [])]
@@ -25,7 +25,7 @@ export function agentMatchesFilter(agent: { name: string; id: string; memorySumm
   return target.includes(text)
 }
 
-/** 按过滤文本匹配事件:类型 / 描述 / 来源系统 / detail */
+/** 按过滤文本匹配事件类型、描述、来源系统和 detail。 */
 export function eventMatchesFilter(event: { eventType: string; description: string; sourceSystem: string; detail?: Record<string, unknown> | null }, text: string): boolean {
   if (!text) return true
   const target = [event.eventType, event.description, event.sourceSystem, JSON.stringify(event.detail ?? {})]

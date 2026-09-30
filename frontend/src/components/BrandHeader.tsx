@@ -1,34 +1,36 @@
+import { BilingualText } from './i18n'
+
+/** 品牌头部及运行指标的输入属性。 */
 interface BrandHeaderProps {
   tick: number
   agentCount: number
   eventCount: number
 }
 
-/** Hero 品牌区:标题 + 三个核心指标 */
+/** 渲染品牌标题和三个核心运行指标。 */
 export function BrandHeader({ tick, agentCount, eventCount }: BrandHeaderProps) {
   return (
     <div className="brand">
-      <div className="eyebrow">Virtual AI Box · Sandbox Control Center</div>
-      <h1>让 Agent 记住世界,也让世界记住事件。</h1>
+      <div className="eyebrow"><BilingualText primary="Virtual AI Box" secondary="虚拟 AI 小镇 · 世界观察台" /></div>
+      <h1><BilingualText primary="A town that remembers" secondary="一个会记住世界的虚拟小镇" /></h1>
       <p className="lead">
-        一个以 SECD 抽象机为行为执行内核、以 LLM 为 Oracle 的多 Agent 沙盒:
-        世界状态、Agent 记忆、事件流与每 Agent 的 S/E/C/D 心智状态同屏可见,
-        为经营、社交、任务、战斗等系统保留了统一入口。
+        这里是一个由 SECD 抽象机驱动行为、由语言模型辅助决策的多居民沙盒：
+        世界状态、居民记忆、事件流和每位居民的 S/E/C/D 心智状态都集中呈现。
       </p>
 
       <div className="hero-meta">
         <div className="metric">
-          <div className="label">Current Tick</div>
+          <BilingualText primary="Step" secondary="当前刻度" className="metric-label" />
           <div className="value">{tick}</div>
           <div className="hint">虚拟时钟推进中的当前刻度</div>
         </div>
         <div className="metric">
-          <div className="label">Active Agents</div>
+          <BilingualText primary="Residents" secondary="活跃居民" className="metric-label" />
           <div className="value">{agentCount}</div>
           <div className="hint">正在参与决策的智能体数量</div>
         </div>
         <div className="metric">
-          <div className="label">Event History</div>
+          <BilingualText primary="Events" secondary="事件记录" className="metric-label" />
           <div className="value">{eventCount}</div>
           <div className="hint">事件总线已记录的历史事件数</div>
         </div>

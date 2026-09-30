@@ -26,15 +26,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * P5 行为 DSL 编译与运行时融合验证（P6 扩展条件/感知/方向移动）。
+ * 行为 DSL 编译与运行时融合验证，覆盖条件、感知和方向移动。
  *
- * <p>验证点（docs/secd-fusion-design-frozen.md §P5/§P6 验收）：</p>
+ * <p>验证点包括 DSL 编译、运行时执行、条件、感知和方向移动：</p>
  * <ul>
  *   <li>编译：{@code .lambda} 文本 → {@link BehaviorProgram}（plan / defs / onMeet）；</li>
  *   <li>fail-fast：语法错误、缺 plan、未知名称、def 循环都在加载期报错；</li>
  *   <li>运行时：plan 内联引用 dx/dy（LLM Oracle 注入），tick 产出 MoveEffect；</li>
  *   <li>onMeet：DSL 的 λ 闭包经 interrupt/runHandler 跑完 greet + persona；</li>
- *   <li>P6 条件与感知：if/then/else 编译为 InstIfThenElse（真值 Scheme 风格，仅 #f 为假）；
+ *   <li>条件与感知：if/then/else 编译为 InstIfThenElse（真值 Scheme 风格，仅 #f 为假）；
  *       感知原语（closest/dist-to/direction-of 等）查询注入的只读快照，无对象 → #f；
  *       move north 与 move dx dy 统一为 MoveEffect(deltaX, deltaY)。</li>
  * </ul>
@@ -139,7 +139,7 @@ class BehaviorCompilerTest {
 
     @Test
     void ifCompilesIntoInstSeq() {
-        // P6：if/then/else 已实现，编译为 InstSeq([cond, InstIfThenElse(then, else)])
+        // if/then/else 编译为 InstSeq([cond, InstIfThenElse(then, else)])
         String src = """
                 plan = if (gt 3 2) then (move 1 0) else (move 0 1)
                 """;
@@ -206,7 +206,7 @@ class BehaviorCompilerTest {
                 "对话结束后 D 栈应清空（主计划已恢复）");
     }
 
-    // ---------------------------------------------------------- P6 条件/感知/方向
+        // ---------------------------------------------------------- 条件/感知/方向
 
     @Test
     void ifCompilesAndRunsThenBranch() {
@@ -297,7 +297,7 @@ class BehaviorCompilerTest {
 
     @Test
     void ifInsideHandlerAndInterrupt() {
-        // if 出现在 handler 闭包内：C 栈同构，与 P2 中断/恢复兼容（docs §17.5）
+        // if 出现在 handler 闭包内：C 栈同构，与中断/恢复兼容
         String src = """
                 greet  = λ other. (speak other "你好")
                 persona = λ other. (remember "met" "遇见")

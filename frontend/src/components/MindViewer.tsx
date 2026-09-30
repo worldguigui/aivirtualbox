@@ -1,4 +1,5 @@
 import type { MindState } from '../types'
+import { BilingualText } from './i18n'
 
 interface MindViewerProps {
   agentName: string | null
@@ -11,30 +12,30 @@ interface MindViewerProps {
 function statusBadge(status: MindState['status'] | undefined) {
   switch (status) {
     case 'executing':
-      return { label: 'Executing', className: 'mind-status-exec', hint: 'C 栈有指令，正在执行行为程序' }
+    return { label: '执行中', className: 'mind-status-exec', hint: 'C 栈有指令，正在执行行为程序' }
     case 'suspended':
-      return { label: 'Suspended', className: 'mind-status-susp', hint: 'D 栈有挂起帧：被中断/闭包续体' }
+    return { label: '已挂起', className: 'mind-status-susp', hint: 'D 栈有挂起帧：被中断或等待闭包续体' }
     case 'idle':
-      return { label: 'Idle', className: 'mind-status-idle', hint: '计划耗尽，等待重编译' }
+    return { label: '空闲', className: 'mind-status-idle', hint: '计划耗尽，等待重新编译' }
     default:
       return { label: '—', className: '', hint: '' }
   }
 }
 
-/** SECD Mind 面板：展示选中 Agent 的 S/E/C/D 四寄存器状态（P4）。 */
+/** SECD Mind 面板：展示选中 Agent 的 S/E/C/D 四寄存器状态。 */
 export function MindViewer({ agentName, agentId, mind, tick }: MindViewerProps) {
   const badge = statusBadge(mind?.status)
 
   return (
       <div className="panel">
-          <div className="panel-header">
+        <div className="panel-header">
               <div>
-                  <div className="panel-title">SECD Mind{agentName ? ` · ${agentName}` : ''}</div>
+                  <BilingualText primary={`SECD Mind${agentName ? ` · ${agentName}` : ''}`} secondary="行为心智" className="panel-title" />
                   <div
-                      className="panel-subtitle">{agentId ? `${agentId} — S/E/C/D 行为执行状态` : '选择 Agent 查看其 SECD 心智'}</div>
+                      className="panel-subtitle">{agentId ? `${agentId} — S/E/C/D 行为执行状态` : '选择居民查看其 SECD 心智'}</div>
               </div>
               <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
-                  <span className="badge">Tick {tick}</span>
+                  <span className="badge"><BilingualText primary={`Step ${tick}`} secondary={`第 ${tick} 刻`} /></span>
                   {mind ? (
                       <span className={`badge ${badge.className}`} title={badge.hint}>{badge.label}</span>
                   ) : null}
@@ -45,7 +46,7 @@ export function MindViewer({ agentName, agentId, mind, tick }: MindViewerProps) 
                   <div className="empty">
                       暂无 SECD 运行时状态。
                       <br/>
-                      <span className="subtle">Agent 尚未产生心智，或点击左侧 Agent 卡片查看其行为执行状态。</span>
+                      <span className="subtle">居民尚未产生心智，或点击左侧居民卡片查看其行为执行状态。</span>
                   </div>
               ) : (
                   <>
@@ -89,7 +90,7 @@ export function MindViewer({ agentName, agentId, mind, tick }: MindViewerProps) 
                                   </ol>
                               ) : mind.program.length > 0 ? (
                                   <>
-                                      <div className="subtle" style={{marginBottom: 4}}>上次行为程序（已执行完）</div>
+                                      <div className="subtle" style={{marginBottom: 4}}>上次行为程序（已完成）</div>
                                       <ol className="register-list mono">
                                           {mind.program.map((inst, i) => <li key={i}>{inst}</li>)}
                                       </ol>
@@ -109,14 +110,14 @@ export function MindViewer({ agentName, agentId, mind, tick }: MindViewerProps) 
                               <div className="subtle">
                                   {mind.dSize === 0
                                       ? '无挂起帧（未被中断）'
-                                      : `${mind.dSize} 个挂起帧（中断/闭包续体，>=50 触发无限归约告警）`}
+                                      : `${mind.dSize} 个挂起帧（中断/闭包续体，达到 50 触发深度告警）`}
                               </div>
                           </div>
                       </div>
 
                       {mind.lastActions.length > 0 ? (
                           <div style={{marginTop: 14}}>
-                              <div className="subtle" style={{marginBottom: 6}}>本 tick 副作用</div>
+                              <div className="subtle" style={{marginBottom: 6}}>本刻度副作用</div>
                               <div className="timeline">
                                   {mind.lastActions.map((action, i) => (
                                       <div key={i} className="timeline-item">

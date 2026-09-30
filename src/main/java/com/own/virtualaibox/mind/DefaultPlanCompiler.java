@@ -20,13 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 行为程序编译器（P1 默认计划 + P2 onMeet 对话），尚未到 P5 的 .lambda DSL。
+ * 行为程序编译器，负责生成默认计划和 onMeet 对话行为。
  *
  * <p><b>默认计划</b>（计划耗尽时编译）：LLM 作 Oracle 决定方向，编译成一条
  * {@value #PATH_LENGTH} 步的路径，路径起点附记忆写入。程序驻留 C 栈跨 tick 执行，
  * 每 tick 只推进"一步动作"，计划自然分片。</p>
  *
- * <p><b>onMeet 对话</b>（相遇时编译，P2）：把对方当作参数 B，应用 λ 闭包
+ * <p><b>onMeet 对话</b>（相遇时编译）：把对方当作参数 B，应用 λ 闭包
  * {@code λother. (speak other 问候; remember 相遇)}。闭包应用会挂起现场到 D 栈，
  * 与 {@link AgentRuntime#interrupt} 的中断帧叠加，构成"主计划被中断→对话→恢复"。</p>
  */
@@ -61,7 +61,7 @@ public class DefaultPlanCompiler {
     }
 
     /**
-     * 编译 onMeet 对话程序（P2）：{@code apply(λother. (speak other …; remember …), B)}。
+      * 编译 onMeet 对话程序：{@code apply(λother. (speak other …; remember …), B)}。
      *
      * <p>以闭包应用形式表达"相遇 → 对话"，闭包应用会占用 D 栈一帧；
      * 与中断帧（{@link AgentRuntime#interrupt}）叠加，验证 D 栈的中断/恢复语义。</p>

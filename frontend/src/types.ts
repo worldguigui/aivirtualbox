@@ -1,11 +1,13 @@
 /** 与后端 /api/dashboard 返回结构对应的类型定义 */
 
+/** 世界网格和 Agent 数量摘要。 */
 export interface WorldInfo {
   width: number
   height: number
   agentCount: number
 }
 
+/** 单个 Agent 的记忆分类统计。 */
 export interface MemoryStats {
   agentId: string
   totalCount: number
@@ -17,6 +19,7 @@ export interface MemoryStats {
   learningCount: number
 }
 
+/** 仪表盘展示的一条记忆记录。 */
 export interface MemoryEntry {
   id: string
   type: string
@@ -30,6 +33,7 @@ export interface MemoryEntry {
   relatedAgentId: string | null
 }
 
+/** 仪表盘展示的 Agent 状态、位置和记忆信息。 */
 export interface Agent {
   id: string
   name: string
@@ -40,11 +44,11 @@ export interface Agent {
   memoryStats: MemoryStats | null
   memorySummary: string
   recentMemories: MemoryEntry[]
-  /** P4：该 Agent 的 SECD 行为执行状态（无运行时为 null） */
+  /** 该 Agent 的 SECD 行为执行状态（无运行时为 null）。 */
   mind: MindState | null
 }
 
-/** SECD 四寄存器状态摘要（P4 可视化，对应 AgentRuntime.mindSummary） */
+/** SECD 四寄存器状态摘要，对应 AgentRuntime.mindSummary。 */
 export interface MindState {
   status: 'executing' | 'suspended' | 'idle'
   terminated: boolean
@@ -57,13 +61,14 @@ export interface MindState {
   sTop: string[]
   eTop: Array<{ key: string; value: string }>
   cTop: string[]
-  /** 上次编译的行为程序（C 栈快照，机器 idle 时仍保留） */
+  /** 上次编译的行为程序（C 栈快照，机器 idle 时仍保留）。 */
   program: string[]
-  /** 上次 tick 产出的副作用摘要 */
+  /** 上次 tick 产出的副作用摘要。 */
   lastActions: string[]
 }
 
-/** 收敛/活锁状态快照（P3 → P4 收敛指示器，对应 ConvergenceMonitor.summary） */
+/** 收敛/活锁状态快照，对应 ConvergenceMonitor.summary。 */
+/** 世界和 Agent 的收敛、卡死及循环检测摘要。 */
 export interface ConvergenceInfo {
   worldConverged: boolean
   stableTicks: number
@@ -73,6 +78,7 @@ export interface ConvergenceInfo {
 }
 
 /** 事件 detail 为多态字段,不同事件类型结构不同 */
+/** 仪表盘展示的领域事件及其多态 detail 数据。 */
 export interface DashboardEvent {
   eventId: string
   eventType: string
@@ -85,6 +91,7 @@ export interface DashboardEvent {
   detail: Record<string, unknown> | null
 }
 
+/** 服务端运行指标摘要。 */
 export interface Metrics {
   eventSubscriberCount: number
   eventHistorySize: number
@@ -93,6 +100,7 @@ export interface Metrics {
   serverTime: string
 }
 
+/** 仪表盘接口返回的完整数据。 */
 export interface DashboardData {
   tick: number
   world: WorldInfo

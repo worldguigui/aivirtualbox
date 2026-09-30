@@ -1,5 +1,19 @@
 package com.own.virtualaibox.behaviordsl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+
 import com.own.virtualaibox.secd.InstApp;
 import com.own.virtualaibox.secd.InstConst;
 import com.own.virtualaibox.secd.InstIfThenElse;
@@ -16,22 +30,9 @@ import com.own.virtualaibox.secd.value.OpValue;
 import com.own.virtualaibox.secd.value.StringValue;
 import com.own.virtualaibox.secd.value.Value;
 import com.own.virtualaibox.secd.value.VoidValue;
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
- * P5 行为 DSL 编译器：把 {@code *.lambda} 源文本编译为 {@link BehaviorProgram}。
+ * 行为 DSL 编译器：把 {@code *.lambda} 源文本编译为 {@link BehaviorProgram}。
  *
  * <p>管线（docs §10）：{@code .lambda → ANTLR 解析 → 本类编译 → SECD → Effect → World}。
  * 语法由 {@code src/main/antlr4/.../BehaviorDSL.g4} 生成解析器，本类只做
@@ -43,7 +44,7 @@ import java.util.Set;
  *       {@code InstConst(OpValue)}，柯里化应用；应用 {@code (f a b)} 左结合展开为
  *       {@code ((f a) b)}；零参调用 {@code (f)} 应用一次到 unit（VoidValue）；</li>
  *   <li>{@code let x = e in b} 编译为 {@code apply(λx.b, e)}（β 归约），不占新 D 帧；</li>
- *   <li>{@code if/then/else}（P6）编译为 {@code [cond, InstIfThenElse(then, else)]}，
+ *   <li>{@code if/then/else} 编译为 {@code [cond, InstIfThenElse(then, else)]}，
  *       条件只弹 S 顶一次并把选中分支压入 C，不占新 D 帧（docs §17.5）；真值遵循
  *       Scheme 风格——仅 {@code #f} 为假，其余（0、""、AgentRef 等）皆真；</li>
  *   <li>def 的顶层引用在编译期以自由变量形式记录，编译期按依赖序把 def 求值为闭包值
@@ -52,7 +53,7 @@ import java.util.Set;
  */
 public class BehaviorCompiler {
 
-    /** 运行时原语集合（对应 WorldOpEvaluator / ArithmeticOpEvaluator，含 P6 感知/比较）。 */
+    /** 运行时原语集合（对应 WorldOpEvaluator / ArithmeticOpEvaluator，含感知和比较）。 */
     private static final Set<String> OPS = Set.of(
             "move", "speak", "remember", "ask-llm",
             "add", "mul", "succ", "sqr",
@@ -178,7 +179,7 @@ public class BehaviorCompiler {
                     new InstApp(new InstLam(name, body.code()), bound.code()), free);
         }
         if (ctx.ifExpr() != null) {
-            // P6 条件分支（docs §17.5）：cond 求值后 InstIfThenElse 弹 S 顶，
+            // 条件分支：cond 求值后 InstIfThenElse 弹 S 顶，
             // 按真值把选中分支压入 C；不占新 D 帧，与中断/恢复兼容。
             BehaviorDSLParser.IfExprContext ie = ctx.ifExpr();
             CompiledExpr cond = compileExpr(ie.expr(0), scope);

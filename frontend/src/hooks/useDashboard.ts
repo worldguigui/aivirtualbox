@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchDashboard, stepTick } from '../api/dashboard'
 import type { DashboardData } from '../types'
 
+/** 仪表盘查询、步进和自动运行所需的配置。 */
 export interface UseDashboardOptions {
   eventLimit: number
   memoryLimit: number
@@ -17,7 +18,7 @@ export interface UseDashboardOptions {
 /**
  * 仪表盘数据查询 + 手动步进 + 自动运行循环。
  *
- * - 空闲(未自动运行)时每 5s 轮询,与旧前端行为一致
+ * - 空闲（未自动运行）时每 5s 轮询
  * - eventLimit / memoryLimit 变化会改变 queryKey,自动触发重新拉取
  * - 自动运行使用链式 setTimeout,避免步进耗时超过间隔时重叠调用
  */
@@ -39,13 +40,13 @@ export function useDashboard({
     retry: false,
   })
 
-  /** 手动刷新:失效 dashboard 查询,下次访问时重新拉取 */
+    /** 手动刷新：使 dashboard 查询失效并重新拉取。 */
   const refresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
     [queryClient],
   )
 
-  /** 单步推进世界并刷新 */
+  /** 单步推进世界并刷新仪表盘数据。 */
   const step = useCallback(async () => {
     setStepping(true)
     try {

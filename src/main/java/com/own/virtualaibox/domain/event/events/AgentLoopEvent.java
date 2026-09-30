@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Agent 循环 / 活锁事件（P3）
+ * Agent 循环 / 活锁事件。
  *
  * <p>两种情况触发（以 reason 区分）：</p>
  * <ul>

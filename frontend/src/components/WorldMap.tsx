@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import type { Agent, WorldInfo } from '../types'
+import { BilingualText } from './i18n'
 
+/** 世界地图组件的输入属性。 */
 interface WorldMapProps {
   agents: Agent[]
   tick: number
@@ -11,8 +13,9 @@ interface WorldMapProps {
 
 /** 画布基准尺寸:网格在 960x960 内等比缩放 */
 const CANVAS_BASE = 960
-const AGENT_COLORS = ['#5eead4', '#7c8cff', '#ffb86b', '#ff6b88', '#9ef7ea', '#9bffd9']
+const AGENT_COLORS = ['#6d7f5d', '#b66b52', '#c49552', '#8b6f7f', '#78909a', '#9c8064']
 
+/** 绘制世界地图所需的画布和 Agent 参数。 */
 interface DrawOptions {
   agents: Agent[]
   tick: number
@@ -22,12 +25,12 @@ interface DrawOptions {
   cellSize: number
 }
 
-/** 世界地图绘制逻辑(由原 index.html drawWorld 迁移,改为显式传参的纯函数) */
+/** 按给定世界尺寸和 Agent 状态绘制网格地图。 */
 function drawWorld(ctx: CanvasRenderingContext2D, { agents, tick, selectedAgentId, width, height, cellSize }: DrawOptions) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-  const gridColor = 'rgba(124, 140, 255, 0.12)'
-  const majorGridColor = 'rgba(124, 140, 255, 0.22)'
+  const gridColor = 'rgba(75, 91, 70, 0.16)'
+  const majorGridColor = 'rgba(75, 91, 70, 0.3)'
 
   for (let x = 0; x <= width; x++) {
     ctx.beginPath()
@@ -60,13 +63,13 @@ function drawWorld(ctx: CanvasRenderingContext2D, { agents, tick, selectedAgentI
     const stack = occupied.get(`${agent.x},${agent.y}`) ?? 1
     const radius = stack > 1 ? 8 : 7
 
-    // 光晕
+    // 居民位置标记
     ctx.beginPath()
     ctx.arc(x, y, radius * 2.1, 0, Math.PI * 2)
     ctx.fillStyle = `${color}22`
     ctx.fill()
 
-    // 主体
+    // 居民主体
     ctx.beginPath()
     ctx.arc(x, y, radius, 0, Math.PI * 2)
     ctx.fillStyle = color
@@ -86,31 +89,31 @@ function drawWorld(ctx: CanvasRenderingContext2D, { agents, tick, selectedAgentI
     }
 
     // 名字标签
-    ctx.fillStyle = '#f7fbff'
-    ctx.font = '11px Inter, sans-serif'
+    ctx.fillStyle = '#3f493b'
+    ctx.font = '11px "Noto Serif SC", "Songti SC", serif'
     ctx.textAlign = 'center'
     ctx.fillText(agent.name, x, y - 13)
 
     // 堆叠计数角标
     if (stack > 1) {
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = '#fffaf0'
       ctx.beginPath()
       ctx.arc(x + 14, y - 14, 9, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = '#07111f'
-      ctx.font = '10px Inter, sans-serif'
+      ctx.fillStyle = '#3f493b'
+      ctx.font = '10px "Noto Serif SC", "Songti SC", serif'
       ctx.fillText(String(stack), x + 14, y - 11)
     }
   })
 
-  // tick 水印
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'
-  ctx.font = '12px Inter, sans-serif'
+  // 刻度水印
+  ctx.fillStyle = 'rgba(63,73,59,0.65)'
+  ctx.font = '12px "Noto Serif SC", "Songti SC", serif'
   ctx.textAlign = 'left'
-  ctx.fillText(`tick ${tick}`, 14, 20)
+  ctx.fillText(`第 ${tick} 刻`, 14, 20)
 }
 
-/** World Map 面板:Canvas 世界地图 + overlay 标签 + 渲染状态 */
+/** 渲染 Canvas 世界地图、状态标签和当前 tick。 */
 export function WorldMap({ agents, tick, world, selectedAgentId, status }: WorldMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -133,17 +136,17 @@ export function WorldMap({ agents, tick, world, selectedAgentId, status }: World
     <div className="panel">
       <div className="panel-header">
         <div>
-          <div className="panel-title">World Map</div>
-          <div className="panel-subtitle">37x37 网格世界的可视化运行态</div>
+          <BilingualText primary="World Map" secondary="世界地图" className="panel-title" />
+          <div className="panel-subtitle">37 × 37 网格世界的实时状态</div>
         </div>
-        <div className="badge">{status}</div>
+          <div className="badge">{status}</div>
       </div>
       <div className="canvas-shell">
         <div className="canvas-wrap">
           <div className="canvas-overlay">
-            <span className="overlay-tag">Tick {tick}</span>
-            <span className="overlay-tag">World {world?.width ?? 37}×{world?.height ?? 37}</span>
-            <span className="overlay-tag">Agents {agents.length}</span>
+            <span className="overlay-tag"><BilingualText primary={`Step ${tick}`} secondary={`第 ${tick} 刻`} /></span>
+            <span className="overlay-tag"><BilingualText primary={`World ${world?.width ?? 37} × ${world?.height ?? 37}`} secondary="世界尺寸" /></span>
+            <span className="overlay-tag"><BilingualText primary={`${agents.length} Residents`} secondary={`${agents.length} 位居民`} /></span>
           </div>
           <canvas ref={canvasRef} width={CANVAS_BASE} height={CANVAS_BASE} />
         </div>

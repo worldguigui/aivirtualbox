@@ -34,3 +34,4 @@ build/
 
 ### apikey ###
 src/main/resources/secrets.yml
+docs

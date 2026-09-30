@@ -9,6 +9,7 @@ import App from './App.tsx'
 
 const queryClient = new QueryClient()
 
+/** 挂载前端应用并提供全局查询、路由和本地化上下文。 */
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ConfigProvider locale={zhCN}>
