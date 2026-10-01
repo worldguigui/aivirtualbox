@@ -18,6 +18,26 @@ spring:
     # 元时间：虚拟时钟的起始时间
     meta-instant: 2026-06-03T00:00:00+08:00
 
+virtual-ai-box:
+  world:
+    name: VirtualAIBox Town
+    width: 37
+    height: 37
+    rules:
+      movement: true
+      socialInteraction: true
+      itemSpawning: true
+      combat: false
+      trading: false
+    items: []
+    default-residents:
+      - name: Alice
+        x: 6
+        y: 2
+      - name: Bob
+        x: 18
+        y: 17
+
 langchain4j:
   open-ai:
     chat-model:

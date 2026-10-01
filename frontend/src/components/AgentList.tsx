@@ -7,7 +7,7 @@ interface AgentListProps {
   tick: number
   selectedAgentId: string | null
   onSelectAgent: (id: string) => void
-  onEditAgent: (agent: Agent) => void
+  onEditAgent?: (agent: Agent) => void
 }
 
 /** 渲染 Agent 列表、位置、记忆统计和最近记忆，并处理选中状态。 */
@@ -46,7 +46,7 @@ export function AgentList({ agents, tick, selectedAgentId, onSelectAgent, onEdit
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation()
-                          onEditAgent(agent)
+                          onEditAgent?.(agent)
                         }}
                       >
                         <BilingualText primary="Edit" secondary="修改" />

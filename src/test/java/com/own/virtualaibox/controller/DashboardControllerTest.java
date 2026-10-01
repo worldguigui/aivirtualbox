@@ -25,13 +25,14 @@ import com.own.virtualaibox.monitor.ConvergenceMonitor;
 class DashboardControllerTest {
 
     private DashboardController controller;
+    private WorldEngine worldEngine;
 
     @BeforeEach
     void setUp() {
         EventBus eventBus = new EventBus();
         VirtualClock virtualClock = mock(VirtualClock.class);
         when(virtualClock.getTick()).thenReturn(0);
-        WorldEngine worldEngine = new WorldEngine(virtualClock, null, eventBus, new InMemoryMemoryStore());
+        worldEngine = new WorldEngine(virtualClock, null, eventBus, new InMemoryMemoryStore());
         worldEngine.init();
         MindController mindController = new MindController(new FakeBrain());
         controller = new DashboardController(
@@ -116,11 +117,14 @@ class DashboardControllerTest {
         assertNotNull(((Map<?, ?>) agents.get(0)).get("memoryStats"));
     }
 
-    /**
-     * TODO 更新应该以id作为标准，这里测试会报错，无需在意
-     */
     @Test
     void updateAgentUpdatesExistingResidentProfile() {
+        String aliceId = worldEngine.getWorld().getAgents().stream()
+                .filter(agent -> "Alice".equalsIgnoreCase(agent.getName()))
+                .findFirst()
+                .orElseThrow()
+                .getId();
+
         AgentUpdateRequest request = new AgentUpdateRequest(
                 "Alice",
                 12,
@@ -133,7 +137,7 @@ class DashboardControllerTest {
                         "重视秩序与证据",
                         "只相信已核验与已记录的细节"));
 
-        Map<String, Object> response = controller.updateAgent("Alice", request);
+        Map<String, Object> response = controller.updateAgent(aliceId, request);
 
         Map<?, ?> updated = (Map<?, ?>) response.get("agent");
         assertEquals("Alice", updated.get("name"));

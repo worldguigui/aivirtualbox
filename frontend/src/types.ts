@@ -2,9 +2,30 @@
 
 /** 世界网格和 Agent 数量摘要。 */
 export interface WorldInfo {
+  name: string
   width: number
   height: number
   agentCount: number
+  rules: Record<string, boolean>
+  items: WorldItemDefinition[]
+}
+
+export interface WorldItemDefinition {
+  id: string
+  name: string
+  type: string
+  maxCount: number
+  spawnWeight: number
+  description: string
+}
+
+export interface WorldConfig {
+  name: string
+  width: number
+  height: number
+  rules: Record<string, boolean>
+  items: WorldItemDefinition[]
+  defaultResidents: Array<{ name: string; x: number; y: number }>
 }
 
 /** 新居民创建请求。坐标为空时由世界引擎分配默认位置。 */
@@ -130,6 +151,7 @@ export interface Metrics {
 export interface DashboardData {
   tick: number
   world: WorldInfo
+  worldConfig: WorldConfig
   agents: Agent[]
   events: DashboardEvent[]
   metrics: Metrics

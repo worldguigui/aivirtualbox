@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { Agent, AgentCreateRequest, DashboardData, StepResult, WorldInfo } from '../types'
+import type { Agent, AgentCreateRequest, DashboardData, StepResult, WorldConfig, WorldInfo } from '../types'
 
 /** 拉取仪表盘主数据。 */
 export function fetchDashboard(eventLimit: number, memoryLimit: number) {
@@ -30,6 +30,18 @@ export function createAgent(input: AgentCreateRequest) {
 
 export function updateAgent(agentId: string, input: AgentCreateRequest) {
   return request<CreateAgentResult>(`/api/dashboard/agents/${encodeURIComponent(agentId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
+export function fetchWorldConfig() {
+  return request<WorldConfig>('/api/dashboard/world')
+}
+
+export function updateWorldConfig(input: WorldConfig) {
+  return request<{ tick: number; world: WorldInfo; worldConfig: WorldConfig; agents: Agent[] }>('/api/dashboard/world', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),

@@ -1,5 +1,8 @@
 package com.own.virtualaibox.core;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,6 +13,8 @@ import com.own.virtualaibox.domain.agent.Agent;
 import com.own.virtualaibox.domain.event.EventBus;
 import com.own.virtualaibox.domain.memory.InMemoryMemoryStore;
 import com.own.virtualaibox.domain.world.World;
+import com.own.virtualaibox.domain.world.WorldConfig;
+import com.own.virtualaibox.domain.world.WorldItemDefinition;
 
 class WorldEngineTest {
 
@@ -123,5 +128,34 @@ class WorldEngineTest {
 
         assertThrows(IllegalArgumentException.class, () -> worldEngine.addAgent(missingId));
         assertThrows(IllegalArgumentException.class, () -> worldEngine.addAgent(missingState));
+    }
+
+    @Test
+    void updateWorldConfigAppliesDimensionsRulesAndItems() {
+        worldEngine.init();
+        WorldConfig config = WorldConfig.defaultConfig();
+        config.setName("Configured Town");
+        config.setWidth(50);
+        config.setHeight(45);
+        config.setRules(Map.of("movement", false, "itemSpawning", true));
+        config.setItems(List.of(new WorldItemDefinition("berry", "浆果", "food", 20, 4, "可食用资源")));
+
+        WorldConfig updated = worldEngine.updateWorldConfig(config);
+
+        assertEquals("Configured Town", worldEngine.getWorld().getName());
+        assertEquals(50, worldEngine.getWorld().getWidth());
+        assertEquals(false, worldEngine.getWorld().getRules().get("movement"));
+        assertEquals(1, worldEngine.getWorld().getItems().size());
+        assertEquals("berry", updated.getItems().get(0).getId());
+    }
+
+    @Test
+    void updateWorldConfigRejectsDimensionsThatExcludeExistingResidents() {
+        worldEngine.init();
+        WorldConfig config = WorldConfig.defaultConfig();
+        config.setWidth(5);
+
+        assertThrows(IllegalArgumentException.class, () -> worldEngine.updateWorldConfig(config));
+        assertEquals(37, worldEngine.getWorld().getWidth());
     }
 }

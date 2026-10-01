@@ -2,10 +2,11 @@ import { SimulationControls } from '../components/SimulationControls'
 import { WorldMap } from '../components/WorldMap'
 import type { SimulationPageProps } from './pageTypes'
 import { BilingualText } from '../components/i18n'
+import { WorldConfigPanel } from '../components/WorldConfigPanel'
 
 /** 提供世界地图与模拟控制的专注视图，便于后续加入地形、资源和视野图层。 */
 export function WorldPage(props: SimulationPageProps) {
-  const { data, visibleAgents, selectedAgentId } = props
+  const { data, visibleAgents, selectedAgentId, onUpdateWorldConfig } = props
 
   return (
     <div className="page-stack">
@@ -21,6 +22,7 @@ export function WorldPage(props: SimulationPageProps) {
       <section className="single-stage">
         <WorldMap agents={visibleAgents} tick={data?.tick ?? 0} world={data?.world} selectedAgentId={selectedAgentId} status="运行中" />
       </section>
+      {data?.worldConfig && <WorldConfigPanel config={data.worldConfig} onSave={onUpdateWorldConfig} />}
     </div>
   )
 }

@@ -1,9 +1,12 @@
 package com.own.virtualaibox.core;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.LinkedHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.own.virtualaibox.domain.agent.Agent;
@@ -13,6 +16,7 @@ import com.own.virtualaibox.domain.event.EventBus;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 import com.own.virtualaibox.domain.memory.MemoryStore;
 import com.own.virtualaibox.domain.world.World;
+import com.own.virtualaibox.domain.world.WorldConfig;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -25,23 +29,33 @@ public class WorldEngine {
     private final TickSchedule tickSchedule;
     private final EventBus eventBus;
     private final MemoryStore memoryStore;
+    private WorldConfig worldConfig;
     private final World world;
 
-    public WorldEngine(VirtualClock virtualClock, TickSchedule tickSchedule, 
+    public WorldEngine(VirtualClock virtualClock, TickSchedule tickSchedule,
                        EventBus eventBus, MemoryStore memoryStore) {
+        this(virtualClock, tickSchedule, eventBus, memoryStore, WorldConfig.defaultConfig());
+    }
+
+    @Autowired
+    public WorldEngine(VirtualClock virtualClock, TickSchedule tickSchedule,
+                       EventBus eventBus, MemoryStore memoryStore, WorldConfig worldConfig) {
         this.virtualClock = virtualClock;
         this.tickSchedule = tickSchedule;
         this.eventBus = eventBus;
         this.memoryStore = memoryStore;
-        this.world = new World();
+        this.worldConfig = worldConfig == null ? WorldConfig.defaultConfig() : worldConfig;
+        this.worldConfig.validate();
+        this.world = new World(this.worldConfig);
     }
 
     @PostConstruct
     public void init() {
         log.info("WorldEngine: Initializing...");
         if (world.getAgents().isEmpty()) {
-            createAndAddAgent("Alice", 6, 2);
-            createAndAddAgent("Bob", 18, 17);
+            for (WorldConfig.DefaultResident resident : worldConfig.getDefaultResidents()) {
+                createAndAddAgent(resident.getName(), resident.getX(), resident.getY());
+            }
         }
 
         log.info("WorldEngine: Initialized with {} agents", world.getAgents().size());
@@ -158,6 +172,27 @@ public class WorldEngine {
 
     public World getWorld() {
         return world;
+    }
+
+    public synchronized WorldConfig getWorldConfig() {
+        return copyConfig(worldConfig);
+    }
+
+    public synchronized WorldConfig updateWorldConfig(WorldConfig nextConfig) {
+        if (nextConfig == null) {
+            throw new IllegalArgumentException("world config must not be null");
+        }
+        nextConfig.validate();
+        world.applyConfig(nextConfig);
+        worldConfig = copyConfig(nextConfig);
+        return getWorldConfig();
+    }
+
+    private WorldConfig copyConfig(WorldConfig source) {
+        return new WorldConfig(source.getName(), source.getWidth(), source.getHeight(),
+                source.getRules() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.getRules()),
+                source.getItems() == null ? List.of() : new ArrayList<>(source.getItems()),
+                source.getDefaultResidents() == null ? List.of() : new ArrayList<>(source.getDefaultResidents()));
     }
     
     /**

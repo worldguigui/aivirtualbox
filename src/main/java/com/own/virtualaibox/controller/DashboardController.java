@@ -29,6 +29,7 @@ import com.own.virtualaibox.domain.event.events.TickEndedEvent;
 import com.own.virtualaibox.domain.event.events.TickStartedEvent;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 import com.own.virtualaibox.domain.memory.MemoryEntry;
+import com.own.virtualaibox.domain.world.WorldConfig;
 import com.own.virtualaibox.mind.AgentRuntime;
 import com.own.virtualaibox.mind.MindController;
 import com.own.virtualaibox.monitor.ConvergenceMonitor;
@@ -67,6 +68,7 @@ public class DashboardController {
         Map<String, Object> result = new HashMap<>();
         result.put("tick", worldEngine.getCurrentTick());
         result.put("world", buildWorldInfo());
+        result.put("worldConfig", worldEngine.getWorldConfig());
         result.put("agents", buildAgents(memoryLimit));
         result.put("events", buildEvents(eventLimit));
         result.put("metrics", buildMetrics());
@@ -109,6 +111,22 @@ public class DashboardController {
         result.put("tick", worldEngine.getCurrentTick());
         result.put("agent", agentToMap(agent, 8));
         result.put("world", buildWorldInfo());
+        result.put("agents", buildAgents(8));
+        return result;
+    }
+
+    @GetMapping("/world")
+    public WorldConfig worldConfig() {
+        return worldEngine.getWorldConfig();
+    }
+
+    @PutMapping("/world")
+    public Map<String, Object> updateWorld(@RequestBody WorldConfig request) {
+        WorldConfig config = worldEngine.updateWorldConfig(request);
+        Map<String, Object> result = new HashMap<>();
+        result.put("tick", worldEngine.getCurrentTick());
+        result.put("world", buildWorldInfo());
+        result.put("worldConfig", config);
         result.put("agents", buildAgents(8));
         return result;
     }
@@ -186,6 +204,9 @@ public class DashboardController {
         Map<String, Object> world = new HashMap<>();
         world.put("width", worldEngine.getWorld().getWidth());
         world.put("height", worldEngine.getWorld().getHeight());
+        world.put("name", worldEngine.getWorld().getName());
+        world.put("rules", worldEngine.getWorld().getRules());
+        world.put("items", worldEngine.getWorld().getItems());
         world.put("agentCount", worldEngine.getWorld().getAgents().size());
         return world;
     }

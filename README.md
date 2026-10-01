@@ -45,9 +45,42 @@ http://localhost:8080
 | `GET /api/dashboard/agents?memoryLimit=8` | Agent 列表（含 SECD 心智摘要与记忆） |
 | `GET /api/dashboard/metrics` | 指标（订阅者数、事件历史大小、Agent 数、当前 tick） |
 | `GET /api/dashboard/step` | 手动推进一个 tick |
-| `POST /api/dashboard/addAgent` | 添加 Agent（**接口未完成**，见下） |
+| `POST /api/dashboard/addAgent` | 添加 Agent |
+| `PUT /api/dashboard/agents/{agentId}` | 按 `agentId` 更新居民名称、坐标和人格 |
+| `GET /api/dashboard/world` | 获取世界名称、尺寸、规则、物品定义和默认居民配置 |
+| `PUT /api/dashboard/world` | 通过仪表盘应用世界配置；会校验尺寸、物品定义和现有居民边界 |
 
-> ⚠ `addAgent` 前后端接口未调通（`DashboardController.addAgent()` 未实现），世界 Agent 初始化入口当前被注释。已知问题详见 [`docs/consistency-audit.md`](docs/consistency-audit.md) §3.3。
+## 实习/开发路线（按阶段推进）
+
+### P0：基线修复
+- 修复编译与测试基线
+- 稳定 Agent 创建与默认居民初始化
+- 统一前后端 API 结构
+
+### P1：居民与世界模型
+- 稳定人格模型
+- 记忆闭环（记录、检索、访问、遗忘）
+- WorldState 与世界规则
+
+### P2：交互与可靠性
+- 消息投递
+- 社交关系
+- LLM Oracle 可靠性、fallback 与审计
+
+### P2（延伸）：持久化与回放
+- 事件日志
+- tick 快照
+- 世界恢复与回放
+
+### P3：居民管理与调试
+- 前端居民管理
+- 调试控制台
+- 运行控制与状态观察
+
+### P4：玩法扩展
+- 经济、任务、战斗、进化等系统
+
+> 实施顺序必须遵守：先修正更新逻辑以 `agentId` 为唯一键；再补世界配置层；最后将默认居民生成逻辑改为配置驱动；之后再推进下一阶段功能。
 
 ## 核心概念速览
 
