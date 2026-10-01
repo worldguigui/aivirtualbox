@@ -27,3 +27,11 @@ export function createAgent(input: AgentCreateRequest) {
     body: JSON.stringify(input),
   })
 }
+
+export function updateAgent(agentId: string, input: AgentCreateRequest) {
+  return request<CreateAgentResult>(`/api/dashboard/agents/${encodeURIComponent(agentId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}

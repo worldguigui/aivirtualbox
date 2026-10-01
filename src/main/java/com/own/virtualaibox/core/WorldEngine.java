@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.own.virtualaibox.domain.agent.Agent;
 import com.own.virtualaibox.domain.agent.AgentState;
+import com.own.virtualaibox.domain.agent.PersonalityProfile;
 import com.own.virtualaibox.domain.event.EventBus;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 import com.own.virtualaibox.domain.memory.MemoryStore;
@@ -80,6 +81,36 @@ public class WorldEngine {
 
     /** 创建并加入一个拥有独立记忆和事件监听能力的居民。 */
     public Agent createAndAddAgent(String name, Integer x, Integer y) {
+        return createAndAddAgent(name, x, y, null);
+    }
+
+    /** 更新现有 Agent 的基本信息与人格。 */
+    public Agent updateAgent(String agentId, String name, Integer x, Integer y, PersonalityProfile personality) {
+        Agent agent = world.getAgents().stream()
+                .filter(existing -> existing.getId().equals(agentId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("agent not found: " + agentId));
+
+        String nextName = name == null || name.isBlank() ? agent.getName() : name.trim();
+        if (!nextName.equalsIgnoreCase(agent.getName())
+                && world.getAgents().stream().anyMatch(existing -> !existing.getId().equals(agentId)
+                        && nextName.equalsIgnoreCase(existing.getName()))) {
+            throw new IllegalArgumentException("agent name already exists: " + nextName);
+        }
+
+        int nextX = x == null ? agent.getState().getX() : x;
+        int nextY = y == null ? agent.getState().getY() : y;
+        validatePosition(nextX, nextY);
+
+        agent.setName(nextName);
+        agent.getState().setX(nextX);
+        agent.getState().setY(nextY);
+        agent.setPersonality(PersonalityProfile.normalizeFor(nextName, personality));
+        return agent;
+    }
+
+    /** 创建并加入一个拥有独立记忆和事件监听能力的居民，并允许显式覆盖人格。 */
+    public Agent createAndAddAgent(String name, Integer x, Integer y, PersonalityProfile personality) {
         String normalizedName = name == null || name.isBlank()
                 ? "居民-" + (world.getAgents().size() + 1)
                 : name.trim();
@@ -92,22 +123,24 @@ public class WorldEngine {
         int spawnY = y == null ? 2 + (spawnIndex * 3) % world.getHeight() : y;
         validatePosition(spawnX, spawnY);
 
-        Agent agent = createAgent(normalizedName, spawnX, spawnY);
+        Agent agent = createAgent(normalizedName, spawnX, spawnY, personality);
         addAgent(agent);
         return agent;
     }
 
-    private Agent createAgent(String name, int x, int y) {
+    private Agent createAgent(String name, int x, int y, PersonalityProfile personality) {
         String agentId = UUID.randomUUID().toString();
         AgentState state = new AgentState(x, y, name);
-        
+
         AgentMemory memory = new AgentMemory(agentId, memoryStore);
-        
-        Agent agent = new Agent(agentId, name, state, memory, new ArrayList<>(), true);
+        PersonalityProfile resolvedPersonality = PersonalityProfile.normalizeFor(name, personality);
+
+        Agent agent = new Agent(agentId, name, state, resolvedPersonality,
+            memory, new ArrayList<>(), true);
         agent.setMemory(memory);
-        
+
         log.info("WorldEngine: Created agent {} with id {}", name, agentId);
-        
+
         return agent;
     }
 

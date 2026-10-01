@@ -6,17 +6,18 @@ import java.util.List;
 import com.own.virtualaibox.domain.event.EventListener;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Agent implements EventListener {
     private String id;
     private String name;
     private AgentState state;
+
+    /** 居民稳定的人格、动机、表达方式和知识边界。 */
+    private PersonalityProfile personality;
     
     /** Agent的记忆管理器 */
     private AgentMemory memory;
@@ -26,6 +27,30 @@ public class Agent implements EventListener {
     
     /** Agent是否活跃 */
     private boolean active = true;
+
+    /** 保留旧的六参数构造方式，并为居民创建默认人格。 */
+    public Agent(String id, String name, AgentState state, AgentMemory memory,
+                 List<String> eventHistory, boolean active) {
+        this.id = id;
+        this.name = name;
+        this.state = state;
+        this.personality = PersonalityProfile.defaultFor(name);
+        this.memory = memory;
+        this.eventHistory = eventHistory;
+        this.active = active;
+    }
+
+    /** 创建带有显式人格配置的居民。 */
+    public Agent(String id, String name, AgentState state, PersonalityProfile personality,
+                 AgentMemory memory, List<String> eventHistory, boolean active) {
+        this.id = id;
+        this.name = name;
+        this.state = state;
+        this.personality = personality == null ? PersonalityProfile.defaultFor(name) : personality;
+        this.memory = memory;
+        this.eventHistory = eventHistory;
+        this.active = active;
+    }
     
     @Override
     public void onEvent(com.own.virtualaibox.domain.event.DomainEvent event) {

@@ -60,6 +60,11 @@ public class LLMBrain {
         sb.append("- 你的名字：").append(agent.getName()).append("\n");
         sb.append("- 你的位置：(").append(agent.getState().getX()).append(", ")
                 .append(agent.getState().getY()).append(")\n\n");
+
+        if (agent.getPersonality() != null) {
+            sb.append("=== 你的稳定人格 ===\n");
+            sb.append(agent.getPersonality().toPromptContext()).append("\n\n");
+        }
         
         sb.append("=== 世界中的其他智能体 ===\n");
         for (Map.Entry<String, AgentState> entry : worldState.getAgentStates().entrySet()) {

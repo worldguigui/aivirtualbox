@@ -10,7 +10,9 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -86,7 +88,7 @@ public class DashboardController {
     @PostMapping("/addAgent")
     public Map<String, Object> addAgent(@RequestBody(required = false) AgentCreateRequest request) {
         AgentCreateRequest input = request == null ? new AgentCreateRequest(null, null, null) : request;
-        Agent agent = worldEngine.createAndAddAgent(input.name(), input.x(), input.y());
+        Agent agent = worldEngine.createAndAddAgent(input.name(), input.x(), input.y(), input.personality());
 
         Map<String, Object> result = new HashMap<>();
         result.put("tick", worldEngine.getCurrentTick());
@@ -96,6 +98,20 @@ public class DashboardController {
         return result;
     }
 
+    /** 修改现有居民信息，并返回更新后的居民和世界状态。 */
+    @PutMapping("/agents/{agentId}")
+    public Map<String, Object> updateAgent(@PathVariable String agentId,
+                                           @RequestBody(required = false) AgentUpdateRequest request) {
+        AgentUpdateRequest input = request == null ? new AgentUpdateRequest(null, null, null, null) : request;
+        Agent agent = worldEngine.updateAgent(agentId, input.name(), input.x(), input.y(), input.personality());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("tick", worldEngine.getCurrentTick());
+        result.put("agent", agentToMap(agent, 8));
+        result.put("world", buildWorldInfo());
+        result.put("agents", buildAgents(8));
+        return result;
+    }
 
     /** 推进世界一步并返回最新 Agent 状态。 */
     /**
@@ -185,20 +201,6 @@ public class DashboardController {
                 .toList();
     }
 
-    /** 将 Agent 转换为位置摘要数据。 */
-    /**
-     * @param agent 待转换的 Agent
-     * @return Agent 位置摘要
-     */
-    private Map<String, Object> agentToMap(Agent agent) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", agent.getId());
-        map.put("name", agent.getName());
-        map.put("x", agent.getState().getX());
-        map.put("y", agent.getState().getY());
-        return map;
-    }
-
     /** 将 Agent 转换为包含心智和记忆信息的详细数据。 */
     /**
      * @param agent 待转换的 Agent
@@ -209,6 +211,7 @@ public class DashboardController {
         Map<String, Object> map = new HashMap<>();
         map.put("id", agent.getId());
         map.put("name", agent.getName());
+        map.put("personality", agent.getPersonality());
         map.put("x", agent.getState().getX());
         map.put("y", agent.getState().getY());
         map.put("active", agent.isActive());

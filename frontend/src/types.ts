@@ -12,6 +12,17 @@ export interface AgentCreateRequest {
   name?: string
   x?: number
   y?: number
+  personality?: PersonalityProfile
+}
+
+/** 居民的稳定人格摘要。 */
+export interface PersonalityProfile {
+  role: string
+  temperament: string
+  speakingStyle: string
+  motivations: string
+  values: string
+  knowledgeBoundary: string
 }
 
 /** 推进世界后返回的完整世界与居民状态。 */
@@ -51,6 +62,7 @@ export interface MemoryEntry {
 export interface Agent {
   id: string
   name: string
+  personality: PersonalityProfile | null
   x: number
   y: number
   active: boolean

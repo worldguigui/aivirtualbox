@@ -7,10 +7,11 @@ interface AgentListProps {
   tick: number
   selectedAgentId: string | null
   onSelectAgent: (id: string) => void
+  onEditAgent: (agent: Agent) => void
 }
 
 /** 渲染 Agent 列表、位置、记忆统计和最近记忆，并处理选中状态。 */
-export function AgentList({ agents, tick, selectedAgentId, onSelectAgent }: AgentListProps) {
+export function AgentList({ agents, tick, selectedAgentId, onSelectAgent, onEditAgent }: AgentListProps) {
   return (
     <div className="panel">
       <div className="panel-header">
@@ -39,12 +40,31 @@ export function AgentList({ agents, tick, selectedAgentId, onSelectAgent }: Agen
                       <div className="agent-name">{agent.name || '未知居民'}</div>
                       <div className="subtle">{agent.id}</div>
                     </div>
-                    <div className="badge"><BilingualText primary={agent.active ? 'Active' : 'Inactive'} secondary={agent.active ? '活跃' : '休眠'} /></div>
+                    <div className="card-actions">
+                      <button
+                        className="ghost"
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onEditAgent(agent)
+                        }}
+                      >
+                        <BilingualText primary="Edit" secondary="修改" />
+                      </button>
+                      <div className="badge"><BilingualText primary={agent.active ? 'Active' : 'Inactive'} secondary={agent.active ? '活跃' : '休眠'} /></div>
+                    </div>
                   </div>
                   <div className="kv">
                     <div className="item"><BilingualText primary="Position" secondary="所在位置" className="field-label" /><div className="v">({agent.x}, {agent.y})</div></div>
                     <div className="item"><BilingualText primary="Events" secondary="事件数量" className="field-label" /><div className="v">{agent.eventHistorySize ?? 0}</div></div>
                   </div>
+                  {agent.personality ? (
+                    <div className="personality-summary">
+                      <div className="section-label">人格 / Personality</div>
+                      <div className="personality-line"><strong>{agent.personality.role}</strong><span>{agent.personality.temperament}</span></div>
+                      <div className="subtle">{agent.personality.speakingStyle}</div>
+                    </div>
+                  ) : null}
                   <div className="kv" style={{ marginTop: 10 }}>
                     <div className="item"><BilingualText primary="Memories" secondary="记忆数量" className="field-label" /><div className="v">{agent.memoryStats?.totalCount ?? 0}</div></div>
                     <div className="item"><BilingualText primary="Step" secondary="当前刻度" className="field-label" /><div className="v">{tick}</div></div>

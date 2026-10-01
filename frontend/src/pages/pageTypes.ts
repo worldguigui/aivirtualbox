@@ -8,6 +8,7 @@ export interface PageDataProps {
   selectedAgentId: string | null
   onSelectAgent: (id: string) => void
   onCreateAgent: (input: AgentCreateRequest) => Promise<void>
+  onUpdateAgent: (agentId: string, input: AgentCreateRequest) => Promise<void>
 }
 
 export interface SimulationPageProps extends PageDataProps {

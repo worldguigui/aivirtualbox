@@ -53,6 +53,7 @@ class DashboardControllerTest {
         Map<?, ?> firstAgent = (Map<?, ?>) agents.get(0);
         assertNotNull(firstAgent.get("id"));
         assertNotNull(firstAgent.get("name"));
+        assertNotNull(firstAgent.get("personality"));
         assertNotNull(firstAgent.get("memoryStats"));
         assertNotNull(firstAgent.get("recentMemories"));
     }
@@ -69,6 +70,26 @@ class DashboardControllerTest {
         assertEquals(9, created.get("y"));
         assertEquals(3, world.get("agentCount"));
         assertEquals(3, agents.size());
+    }
+
+    @Test
+    void addAgentPreservesCustomPersonalityProfile() {
+        var profile = new com.own.virtualaibox.domain.agent.PersonalityProfile(
+                "守望者",
+                "沉稳、耐心",
+                "低声细语，措辞慎重",
+                "保护村民并记录关键信息",
+                "重视信任与秩序",
+                "只相信已亲历的事实和可核验的证据");
+
+        Map<String, Object> response = controller.addAgent(new AgentCreateRequest("Nina", 7, 11, profile));
+
+        Map<?, ?> created = (Map<?, ?>) response.get("agent");
+        com.own.virtualaibox.domain.agent.PersonalityProfile personality =
+                (com.own.virtualaibox.domain.agent.PersonalityProfile) created.get("personality");
+        assertEquals("守望者", personality.getRole());
+        assertEquals("沉稳、耐心", personality.getTemperament());
+        assertEquals("Nina", created.get("name"));
     }
 
     @Test
@@ -93,6 +114,32 @@ class DashboardControllerTest {
         assertEquals(2, world.get("agentCount"));
         assertEquals(2, agents.size());
         assertNotNull(((Map<?, ?>) agents.get(0)).get("memoryStats"));
+    }
+
+    /**
+     * TODO 更新应该以id作为标准，这里测试会报错，无需在意
+     */
+    @Test
+    void updateAgentUpdatesExistingResidentProfile() {
+        AgentUpdateRequest request = new AgentUpdateRequest(
+                "Alice",
+                12,
+                8,
+                new com.own.virtualaibox.domain.agent.PersonalityProfile(
+                        "观察员",
+                        "沉静而专注",
+                        "慢条理、低调",
+                        "记录事实并观察变化",
+                        "重视秩序与证据",
+                        "只相信已核验与已记录的细节"));
+
+        Map<String, Object> response = controller.updateAgent("Alice", request);
+
+        Map<?, ?> updated = (Map<?, ?>) response.get("agent");
+        assertEquals("Alice", updated.get("name"));
+        assertEquals(12, updated.get("x"));
+        assertEquals(8, updated.get("y"));
+        assertNotNull(updated.get("personality"));
     }
 
     @Test

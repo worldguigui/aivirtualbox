@@ -31,7 +31,7 @@ export default function App() {
 
   const onAutoRunError = useCallback(() => setAutoRunning(false), [])
 
-  const { data, isFetching, isLoading, isError, stepping, step, refresh, addAgent } = useDashboard({
+  const { data, isFetching, isLoading, isError, stepping, step, refresh, addAgent, updateAgent } = useDashboard({
     eventLimit,
     memoryLimit,
     autoRunning,
@@ -86,6 +86,7 @@ export default function App() {
     selectedAgentId,
     onSelectAgent: setSelectedAgentId,
     onCreateAgent: addAgent,
+    onUpdateAgent: updateAgent,
   }
   const simulationProps = {
     ...pageData,

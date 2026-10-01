@@ -34,6 +34,8 @@ class WorldEngineTest {
         assertEquals(2, world.getAgents().size());
         assertEquals(2, eventBus.getSubscriberCount());
         assertEquals(2, world.getAgents().stream().filter(agent -> agent.getMemory() != null).count());
+        assertEquals("探索者", world.getAgents().get(0).getPersonality().getRole());
+        assertEquals("社区居民", world.getAgents().get(1).getPersonality().getRole());
     }
 
     @Test
@@ -101,6 +103,15 @@ class WorldEngineTest {
 
         assertEquals(0, agent.getState().getX());
         assertEquals(36, agent.getState().getY());
+    }
+
+    @Test
+    void defaultPersonalityIsStableForTheSameResidentName() {
+        worldEngine.init();
+
+        Agent first = worldEngine.getWorld().getAgents().get(0);
+        assertEquals(first.getPersonality(),
+                com.own.virtualaibox.domain.agent.PersonalityProfile.defaultFor(first.getName()));
     }
 
     @Test
