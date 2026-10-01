@@ -7,7 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.own.virtualaibox.core.WorldEngine;
 import com.own.virtualaibox.domain.agent.Agent;
@@ -71,13 +79,21 @@ public class DashboardController {
         return result;
     }
 
-    /** 处理新增 Agent 请求。 */
+    /** 处理新增居民请求，并返回新增居民与最新世界摘要。 */
     /**
      * @return 新增 Agent 的处理结果
      */
     @PostMapping("/addAgent")
-    public Map<String, Object> addAgent() {
+    public Map<String, Object> addAgent(@RequestBody(required = false) AgentCreateRequest request) {
+        AgentCreateRequest input = request == null ? new AgentCreateRequest(null, null, null) : request;
+        Agent agent = worldEngine.createAndAddAgent(input.name(), input.x(), input.y());
+
         Map<String, Object> result = new HashMap<>();
+        result.put("tick", worldEngine.getCurrentTick());
+        result.put("agent", agentToMap(agent, 8));
+        result.put("world", buildWorldInfo());
+        result.put("agents", buildAgents(8));
+        return result;
     }
 
 
@@ -91,7 +107,8 @@ public class DashboardController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("tick", worldEngine.getCurrentTick());
-        result.put("agents", worldEngine.getWorld().getAgents().stream().map(this::agentToMap).toList());
+        result.put("world", buildWorldInfo());
+        result.put("agents", buildAgents(8));
 
         return result;
     }
@@ -136,6 +153,13 @@ public class DashboardController {
     @GetMapping("/metrics")
     public Map<String, Object> metrics() {
         return buildMetrics();
+    }
+
+    /** 将居民创建或参数校验失败转换为客户端可识别的错误响应。 */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleInvalidRequest(IllegalArgumentException exception) {
+        return Map.of("error", exception.getMessage());
     }
 
     /** 构建世界尺寸和 Agent 数量信息。 */

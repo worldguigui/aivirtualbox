@@ -1,10 +1,11 @@
+import { AgentCreatePanel } from '../components/AgentCreatePanel'
 import { AgentList } from '../components/AgentList'
 import { MindViewer } from '../components/MindViewer'
 import type { PageDataProps } from './pageTypes'
 import { BilingualText } from '../components/i18n'
 
 /** 集中查看 Agent 状态、记忆和 SECD 心智快照。 */
-export function AgentsPage({ data, visibleAgents, focusedAgent, selectedAgentId, onSelectAgent }: PageDataProps) {
+export function AgentsPage({ data, visibleAgents, focusedAgent, selectedAgentId, onSelectAgent, onCreateAgent }: PageDataProps) {
   return (
     <div className="page-stack">
       <section className="page-heading">
@@ -15,6 +16,7 @@ export function AgentsPage({ data, visibleAgents, focusedAgent, selectedAgentId,
         </div>
         <div className="heading-stat"><strong>{visibleAgents.length}</strong><BilingualText primary="visible residents" secondary="当前可见居民" /></div>
       </section>
+      <AgentCreatePanel onCreate={onCreateAgent} />
       <section className="agents-layout">
         <AgentList agents={visibleAgents} tick={data?.tick ?? 0} selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
         <MindViewer agentName={focusedAgent?.name ?? null} agentId={focusedAgent?.id ?? null} mind={focusedAgent?.mind ?? null} tick={data?.tick ?? 0} />

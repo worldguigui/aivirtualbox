@@ -1,5 +1,5 @@
 import { request } from './client'
-import type { DashboardData } from '../types'
+import type { Agent, AgentCreateRequest, DashboardData, StepResult, WorldInfo } from '../types'
 
 /** 拉取仪表盘主数据。 */
 export function fetchDashboard(eventLimit: number, memoryLimit: number) {
@@ -7,13 +7,23 @@ export function fetchDashboard(eventLimit: number, memoryLimit: number) {
   return request<DashboardData>(`/api/dashboard?${query}`)
 }
 
-/** 推进世界一步并返回更新后的 tick 与 Agent 位置。 */
-export interface StepResult {
-  tick: number
-  agents: Array<{ id: string; name: string; x: number; y: number }>
-}
-
 /** 请求服务端推进一个世界 tick。 */
 export function stepTick() {
   return request<StepResult>('/api/dashboard/step')
+}
+
+/** 创建居民并返回创建后的世界与居民列表。 */
+export interface CreateAgentResult {
+  tick: number
+  agent: Agent
+  world: WorldInfo
+  agents: Agent[]
+}
+
+export function createAgent(input: AgentCreateRequest) {
+  return request<CreateAgentResult>('/api/dashboard/addAgent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }

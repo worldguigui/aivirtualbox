@@ -894,3 +894,33 @@ button .bilingual-secondary { color: currentColor; opacity: .75; font-size: 10px
 .overlay-tag .bilingual-secondary { font-size: 9px; }
 .ant-timeline .bilingual-primary { font-size: inherit; }
 .ant-timeline .bilingual-secondary { font-size: 10px; }
+
+.create-resident-form {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px 20px 20px;
+}
+.create-resident-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
+.create-resident-form input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  color: var(--text);
+  background: #f8f0df;
+  font: inherit;
+}
+.create-resident-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(95,121,87,.12); }
+.create-resident-form button { min-height: 40px; }
+.create-resident-form button:disabled { cursor: wait; opacity: .65; }
+.form-error { padding: 0 20px 18px; color: var(--danger); font-size: 12px; }
+
+@media (max-width: 760px) {
+  .create-resident-form { grid-template-columns: 1fr 1fr; }
+  .create-resident-form label:first-child { grid-column: 1 / -1; }
+  .create-resident-form button { width: 100%; }
+}

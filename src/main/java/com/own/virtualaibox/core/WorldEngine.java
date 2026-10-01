@@ -1,17 +1,20 @@
 package com.own.virtualaibox.core;
 
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.springframework.stereotype.Component;
+
 import com.own.virtualaibox.domain.agent.Agent;
 import com.own.virtualaibox.domain.agent.AgentState;
 import com.own.virtualaibox.domain.event.EventBus;
 import com.own.virtualaibox.domain.memory.AgentMemory;
 import com.own.virtualaibox.domain.memory.MemoryStore;
 import com.own.virtualaibox.domain.world.World;
+
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -35,19 +38,13 @@ public class WorldEngine {
     @PostConstruct
     public void init() {
         log.info("WorldEngine: Initializing...");
-        
-        /*Agent agent1 = createAgent("Alice", 6, 2);
-        Agent agent2 = createAgent("Bob", 18, 17);
-        
-        world.addAgent(agent1);
-        world.addAgent(agent2);
-        
-        // 注册Agent为事件监听者
-        eventBus.subscribeGlobal(agent1);
-        eventBus.subscribeGlobal(agent2);
-        
+        if (world.getAgents().isEmpty()) {
+            createAndAddAgent("Alice", 6, 2);
+            createAndAddAgent("Bob", 18, 17);
+        }
+
         log.info("WorldEngine: Initialized with {} agents", world.getAgents().size());
-        log.info("WorldEngine: Event listeners registered: {}", eventBus.getSubscriberCount());*/
+        log.info("WorldEngine: Event listeners registered: {}", eventBus.getSubscriberCount());
     }
 
     public void step() {
@@ -62,16 +59,48 @@ public class WorldEngine {
     }
 
     public void addAgent(Agent agent) {
-
-
+        Objects.requireNonNull(agent, "agent must not be null");
+        if (agent.getId() == null || agent.getId().isBlank()) {
+            throw new IllegalArgumentException("agent id must not be blank");
+        }
+        if (agent.getState() == null) {
+            throw new IllegalArgumentException("agent state must not be null");
+        }
+        validatePosition(agent.getState().getX(), agent.getState().getY());
+        if (world.getAgents().stream().anyMatch(existing -> existing.getId().equals(agent.getId()))) {
+            throw new IllegalArgumentException("agent id already exists: " + agent.getId());
+        }
+        if (agent.getMemory() == null) {
+            agent.setMemory(new AgentMemory(agent.getId(), memoryStore));
+        }
         world.addAgent(agent);
+        eventBus.subscribeGlobal(agent);
+        log.info("WorldEngine: Added agent {} with id {}", agent.getName(), agent.getId());
+    }
+
+    /** 创建并加入一个拥有独立记忆和事件监听能力的居民。 */
+    public Agent createAndAddAgent(String name, Integer x, Integer y) {
+        String normalizedName = name == null || name.isBlank()
+                ? "居民-" + (world.getAgents().size() + 1)
+                : name.trim();
+        if (world.getAgents().stream().anyMatch(agent -> normalizedName.equalsIgnoreCase(agent.getName()))) {
+            throw new IllegalArgumentException("agent name already exists: " + normalizedName);
+        }
+
+        int spawnIndex = world.getAgents().size();
+        int spawnX = x == null ? 2 + (spawnIndex * 4) % world.getWidth() : x;
+        int spawnY = y == null ? 2 + (spawnIndex * 3) % world.getHeight() : y;
+        validatePosition(spawnX, spawnY);
+
+        Agent agent = createAgent(normalizedName, spawnX, spawnY);
+        addAgent(agent);
+        return agent;
     }
 
     private Agent createAgent(String name, int x, int y) {
         String agentId = UUID.randomUUID().toString();
         AgentState state = new AgentState(x, y, name);
         
-        // 为Agent创建记忆管理器
         AgentMemory memory = new AgentMemory(agentId, memoryStore);
         
         Agent agent = new Agent(agentId, name, state, memory, new ArrayList<>(), true);
@@ -80,6 +109,13 @@ public class WorldEngine {
         log.info("WorldEngine: Created agent {} with id {}", name, agentId);
         
         return agent;
+    }
+
+    private void validatePosition(int x, int y) {
+        if (x < 0 || x >= world.getWidth() || y < 0 || y >= world.getHeight()) {
+            throw new IllegalArgumentException(
+                    "agent position must be inside world: (" + x + ", " + y + ")");
+        }
     }
 
 

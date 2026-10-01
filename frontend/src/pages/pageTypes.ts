@@ -1,4 +1,4 @@
-import type { Agent, DashboardData, DashboardEvent } from '../types'
+import type { Agent, AgentCreateRequest, DashboardData, DashboardEvent } from '../types'
 
 export interface PageDataProps {
   data?: DashboardData
@@ -7,6 +7,7 @@ export interface PageDataProps {
   focusedAgent: Agent | null
   selectedAgentId: string | null
   onSelectAgent: (id: string) => void
+  onCreateAgent: (input: AgentCreateRequest) => Promise<void>
 }
 
 export interface SimulationPageProps extends PageDataProps {

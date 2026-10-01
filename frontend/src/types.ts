@@ -7,6 +7,20 @@ export interface WorldInfo {
   agentCount: number
 }
 
+/** 新居民创建请求。坐标为空时由世界引擎分配默认位置。 */
+export interface AgentCreateRequest {
+  name?: string
+  x?: number
+  y?: number
+}
+
+/** 推进世界后返回的完整世界与居民状态。 */
+export interface StepResult {
+  tick: number
+  world: WorldInfo
+  agents: Agent[]
+}
+
 /** 单个 Agent 的记忆分类统计。 */
 export interface MemoryStats {
   agentId: string

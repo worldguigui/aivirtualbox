@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchDashboard, stepTick } from '../api/dashboard'
-import type { DashboardData } from '../types'
+import { createAgent, fetchDashboard, stepTick } from '../api/dashboard'
+import type { AgentCreateRequest, DashboardData } from '../types'
 
 /** 仪表盘查询、步进和自动运行所需的配置。 */
 export interface UseDashboardOptions {
@@ -57,6 +57,12 @@ export function useDashboard({
     }
   }, [refresh])
 
+  /** 创建居民并使当前看板查询重新获取世界和居民数据。 */
+  const addAgent = useCallback(async (input: AgentCreateRequest) => {
+    await createAgent(input)
+    await refresh()
+  }, [refresh])
+
   // 自动运行:每 autoSpeed 毫秒步进一步,当前步完成后才调度下一步
   useEffect(() => {
     if (!autoRunning) return
@@ -90,5 +96,6 @@ export function useDashboard({
     stepping,
     refresh,
     step,
+    addAgent,
   }
 }

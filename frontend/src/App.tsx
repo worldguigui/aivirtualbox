@@ -31,7 +31,7 @@ export default function App() {
 
   const onAutoRunError = useCallback(() => setAutoRunning(false), [])
 
-  const { data, isFetching, isLoading, isError, stepping, step, refresh } = useDashboard({
+  const { data, isFetching, isLoading, isError, stepping, step, refresh, addAgent } = useDashboard({
     eventLimit,
     memoryLimit,
     autoRunning,
@@ -75,7 +75,7 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [step, toggleAutoRun, refresh])
 
-  const lastSync = data ? `Last sync: ${formatTime(data.metrics.serverTime)}` : 'Last sync: -'
+  const lastSync = data ? `最近同步：${formatTime(data.metrics.serverTime)}` : '最近同步：-'
   const status = deriveStatus(stepping, isError, isLoading, isFetching, Boolean(data))
 
   const pageData = {
@@ -85,6 +85,7 @@ export default function App() {
     focusedAgent,
     selectedAgentId,
     onSelectAgent: setSelectedAgentId,
+    onCreateAgent: addAgent,
   }
   const simulationProps = {
     ...pageData,
